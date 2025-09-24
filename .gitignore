@@ -179,5 +179,8 @@ data/
 test_output/
 test_data/
 
+#guides
+guides/
+
 
 

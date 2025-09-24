@@ -4,9 +4,10 @@ import time
 import xml.etree.ElementTree as ET
 from typing import List, Optional
 from urllib.parse import urlencode
-
+from config import get_settings
 from paper import ArxivPaper
 import httpx
+from config import ArxivSettings
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -15,11 +16,33 @@ logger = logging.getLogger(__name__)
 class ArxivClient:
     """Minimal client for fetching papers from arXiv API."""
 
-    def __init__(self, rate_limit_delay: float = 3.0, timeout_seconds: int = 30):
-        self.base_url = "https://export.arxiv.org/api/query"
-        self.rate_limit_delay = rate_limit_delay
-        self.timeout_seconds = timeout_seconds
+    def __init__(self, settings: ArxivSettings):
+        self._settings = settings
         self._last_request_time: Optional[float] = None
+
+    @property
+    def base_url(self) -> str:
+        return self._settings.base_url
+    
+    @property
+    def namespaces(self) -> dict:
+        return self._settings.namespaces
+
+    @property
+    def rate_limit_delay(self) -> float:
+        return self._settings.rate_limit_delay
+
+    @property
+    def timeout_seconds(self) -> int:
+        return self._settings.timeout_seconds
+
+    @property
+    def max_results(self) -> int:
+        return self._settings.max_results
+
+    @property
+    def search_category(self) -> str:
+        return self._settings.search_category
 
     async def _rate_limit(self):
         """Implement rate limiting to respect arXiv's 3-second delay requirement."""
@@ -31,31 +54,37 @@ class ArxivClient:
 
     async def fetch_papers(
         self,
-        query: str = "cat:cs.AI",
-        max_results: int = 10,
         start: int = 0,
+        max_results: Optional[int] = None,
     ) -> List[ArxivPaper]:
         """
         Fetch papers from arXiv API.
 
         Args:
-            query: Search query (default: cs.AI category)
-            max_results: Maximum number of papers to fetch
             start: Starting index for pagination
+            max_results: Maximum number of papers to fetch
+
 
         Returns:
             List of ArxivPaper objects
         """
-        await self._rate_limit()
+        if max_results is None:
+            max_results = self.max_results
+
+        # Build search query
+        search_query = f"cat:{self.search_category}"
 
         params = {
-            "search_query": query,
+            "search_query": search_query,
             "start": start,
             "max_results": min(max_results, 2000),  # arXiv limit
         }
         safe = ":+[]"  # Don't encode :, +, [, ] characters needed for arXiv queries
         url = f"{self.base_url}?{urlencode(params, safe=safe)}"
-        
+
+        # Add rate limiting delay between all requests (arXiv recommends 3 seconds)
+        await self._rate_limit()
+
         async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
             response = await client.get(url)
             response.raise_for_status()
@@ -66,28 +95,22 @@ class ArxivClient:
         """Parse arXiv API XML response."""
         root = ET.fromstring(xml_content)
         
-        # Define namespaces
-        namespaces = {
-            'atom': 'http://www.w3.org/2005/Atom',
-            'arxiv': 'http://arxiv.org/schemas/atom'
-        }
-        
         papers = []
         
         # Find all entry elements
-        for entry in root.findall('.//atom:entry', namespaces):
+        for entry in root.findall('.//atom:entry', self.namespaces):
             try:
                 # Extract paper ID
-                paper_id = entry.find('atom:id', namespaces).text
+                paper_id = entry.find('atom:id', self.namespaces).text
                 if paper_id:
                     paper_id = paper_id.split('/')[-1]  # Extract ID from URL
                 
                 # Extract title
-                title_elem = entry.find('atom:title', namespaces)
+                title_elem = entry.find('atom:title', self.namespaces)
                 title = title_elem.text.strip() if title_elem is not None else ""
                 
                 # Extract abstract
-                summary_elem = entry.find('atom:summary', namespaces)
+                summary_elem = entry.find('atom:summary', self.namespaces)
                 abstract = summary_elem.text.strip() if summary_elem is not None else ""
                 
                 
@@ -108,12 +131,14 @@ class ArxivClient:
 
 async def main():
     """Example usage of the arXiv client."""
-    client = ArxivClient()
+    settings = get_settings()
+
+    # Create arXiv client with explicit settings
+    client = ArxivClient(settings=settings.arxiv)
     
     print("Fetching recent AI papers from arXiv...")
     papers = await client.fetch_papers(
-        query="cat:cs.AI",
-        max_results=5
+        max_results=5,
     )
     
     for i, paper in enumerate(papers, 1):
