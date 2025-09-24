@@ -4,10 +4,10 @@ import time
 import xml.etree.ElementTree as ET
 from typing import List, Optional
 from urllib.parse import urlencode
-from config import get_settings
-from paper import ArxivPaper
+from src.config import get_settings
+from src.paper import ArxivPaper
 import httpx
-from config import ArxivSettings
+from src.config import ArxivSettings
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
