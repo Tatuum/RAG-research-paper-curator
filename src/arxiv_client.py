@@ -6,6 +6,7 @@ from typing import List, Optional
 from urllib.parse import urlencode
 from src.config import get_settings
 from src.paper import ArxivPaper
+from src.exceptions import ArxivAPIException, ArxivAPITimeoutError, ArxivAPIRateLimitError, ArxivParseError
 import httpx
 from src.config import ArxivSettings
 from pydantic import BaseModel
@@ -82,14 +83,26 @@ class ArxivClient:
         safe = ":+[]"  # Don't encode :, +, [, ] characters needed for arXiv queries
         url = f"{self.base_url}?{urlencode(params, safe=safe)}"
 
+        try:
+            logger.info(f"Fetching {max_results} {self.search_category} papers from arXiv")
         # Add rate limiting delay between all requests (arXiv recommends 3 seconds)
-        await self._rate_limit()
+            await self._rate_limit()
 
-        async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
-            response = await client.get(url)
-            response.raise_for_status()
+            async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+                response = await client.get(url)
+                response.raise_for_status()
             
-            return self._parse_response(response.text)
+                return self._parse_response(response.text)
+            
+        except httpx.TimeoutException as e:
+            logger.error(f"arXiv API timeout: {e}")
+            raise ArxivAPITimeoutError(f"arXiv API request timed out: {e}")
+        except httpx.HTTPStatusError as e:
+            logger.error(f"arXiv API HTTP error: {e}")
+            raise ArxivAPIException(f"arXiv API returned error {e.response.status_code}: {e}")
+        except Exception as e:
+            logger.error(f"Failed to fetch papers from arXiv: {e}")
+            raise ArxivAPIException(f"Unexpected error fetching papers from arXiv: {e}")
 
     def _parse_response(self, xml_content: str) -> List[ArxivPaper]:
         """Parse arXiv API XML response."""
