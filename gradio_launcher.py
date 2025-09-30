@@ -11,8 +11,12 @@ import logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),  # This sends logs to terminal
+    ]
 )
 logger = logging.getLogger(__name__)
+logger.info("Logging system initialized successfully")
 
 # Add src to Python path
 src_path = Path(__file__).parent / "src"
@@ -21,4 +25,5 @@ sys.path.insert(0, str(src_path))
 from src.gradio_app import main
 
 if __name__ == "__main__":
+    logger.info("Starting arXiv Paper Curator application...")
     main()

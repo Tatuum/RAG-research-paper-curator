@@ -1,8 +1,10 @@
 import gradio as gr
 import asyncio
+import logging
 from arxiv_client import ArxivClient
 from config import get_settings
 
+logger = logging.getLogger(__name__)
 
 async def search_papers():
     """Search for papers and return formatted titles."""
@@ -19,6 +21,7 @@ async def search_papers():
         
         result = f"Found {len(papers)} papers:\n\n"
         for i, paper in enumerate(papers, 1):
+            logger.debug(f"Processing paper {i}: {paper.title}")
             result += f"{i}. {paper.title}\n"
         
         return result

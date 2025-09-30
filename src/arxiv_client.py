@@ -111,33 +111,66 @@ class ArxivClient:
         papers = []
         
         # Find all entry elements
-        for entry in root.findall('.//atom:entry', self.namespaces):
+        entries = root.findall('.//atom:entry', self.namespaces)
+        total_entries = len(entries)
+        logger.info(f"Found {total_entries} entries in XML response")
+        for i, entry in enumerate(entries, 1):
+            logger.info(f"Processing entry {i}/{total_entries}")
             try:
                 # Extract paper ID
                 paper_id = entry.find('atom:id', self.namespaces).text
                 if paper_id:
                     paper_id = paper_id.split('/')[-1]  # Extract ID from URL
-                
+                    #logger.info(f"Fetched {paper_id} paper from arXiv")
+
                 # Extract title
                 title_elem = entry.find('atom:title', self.namespaces)
                 title = title_elem.text.strip() if title_elem is not None else ""
+                #logger.info(f"Fetched {title} paper from arXiv")
+
+                #Extract authors
+                authors = []
+                author_elems = entry.findall("atom:author", self.namespaces)
+                #logger.info(f"Entry {i}: Found {len(author_elems)} author elements")
+
+                for j, author in enumerate(author_elems):
+                    name_elem = author.find("atom:name", self.namespaces)
+                    name = name_elem.text.strip() if name_elem is not None and name_elem.text else ""
+                    if name:
+                        authors.append(name)
+               # logger.info(f"Entry {i}: Extracted {len(authors)} authors")
+            
                 
                 # Extract abstract
                 summary_elem = entry.find('atom:summary', self.namespaces)
                 abstract = summary_elem.text.strip() if summary_elem is not None else ""
                 
-                
+
+                # Extract PDF URL
+                pdf_url = ""
+                for link in entry.findall("atom:link", self.namespaces):
+                    if link.get("type") == "application/pdf":
+                        url = link.get("href", "")
+                        # Convert HTTP to HTTPS for arXiv URLs
+                        if url.startswith("http://arxiv.org/"):
+                            url = url.replace("http://arxiv.org/", "https://arxiv.org/")
+                        pdf_url = url
+                       # logger.info(f"Entry {i}: Found PDF URL: {pdf_url}")
+                        break
+                    
                 paper = ArxivPaper(
                     paper_id=paper_id,
                     title=title,
-                    abstract=abstract
+                    abstract=abstract,
+                    authors=authors,
+                    pdf_url=pdf_url
                 )
                 papers.append(paper)
                 
             except Exception as e:
                 logger.warning(f"Failed to parse paper entry: {e}")
                 continue
-        
+        #logger.info(f"Returning {len(papers)} papers")
         return papers
 
 

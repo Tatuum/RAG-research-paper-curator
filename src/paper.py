@@ -8,4 +8,6 @@ class ArxivPaper(BaseModel):
 
     paper_id: str = Field(..., description="arXiv paper ID")
     title: str = Field(..., description="Paper title")
+    authors: List[str] = Field(..., description="List of author names")
     abstract: str = Field(..., description="Paper abstract")
+    pdf_url: str = Field(..., description="URL to PDF")
