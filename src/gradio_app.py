@@ -1,7 +1,7 @@
 import gradio as gr
 import asyncio
 import logging
-from arxiv_client import ArxivClient
+from src.services.arxiv.arxiv_client import ArxivClient
 from config import get_settings
 
 logger = logging.getLogger(__name__)
