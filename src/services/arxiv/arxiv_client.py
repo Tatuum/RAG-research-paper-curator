@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from typing import List, Optional
 from urllib.parse import urlencode
 from src.config import get_settings
-from src.paper import ArxivPaper
+from src.schemas.arxiv.paper import ArxivPaper
 from src.exceptions import ArxivAPIException, ArxivAPITimeoutError, ArxivAPIRateLimitError, ArxivParseError
 import httpx
 from src.config import ArxivSettings
