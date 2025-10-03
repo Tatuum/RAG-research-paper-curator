@@ -15,8 +15,6 @@ class BaseConfigSettings(BaseSettings):
         case_sensitive=False,
     )
 
-
-
 class ArxivSettings(BaseConfigSettings):
     model_config = SettingsConfigDict(
         env_file=[".env", str(ENV_FILE_PATH)],
@@ -39,6 +37,20 @@ class ArxivSettings(BaseConfigSettings):
         "arxiv": "http://arxiv.org/schemas/atom",
     }
 
+class PDFParserSettings(BaseConfigSettings):
+    model_config = SettingsConfigDict(
+        env_file=[".env", str(ENV_FILE_PATH)],
+        env_prefix="PDF_PARSER__",
+        extra="ignore",
+        frozen=True,
+        case_sensitive=False,
+    )
+
+    max_pages: int = 30
+    max_file_size_mb: int = 20
+    do_ocr: bool = False
+    do_table_structure: bool = True
+    
 class Settings(BaseConfigSettings):
     app_version: str = "0.1.0"
     debug: bool = True

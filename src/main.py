@@ -1,5 +1,5 @@
 import asyncio
-from arxiv_client import ArxivClient
+from src.services.arxiv.arxiv_client import ArxivClient
 
 
 async def main():
@@ -14,7 +14,8 @@ async def main():
     
     for i, paper in enumerate(papers, 1):
         print(f"\n{i}. {paper.title}")
-   #     print(f"   PDF: {paper.pdf_url}")
+        print(f"   Authors: {', '.join(paper.authors)}")
+        print(f"   PDF: {paper.pdf_url}")
         print("-" * 80)
 
 
