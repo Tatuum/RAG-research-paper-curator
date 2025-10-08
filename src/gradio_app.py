@@ -38,6 +38,11 @@ def main():
         output = gr.Textbox(label="Papers", lines=15)
         
         search_btn.click(fn=search_papers, outputs=output)
+
+        context_btn = gr.Button("Show the first paragraph of each paper", variant="primary")
+        context_output = gr.Textbox(label="Context", lines=15)
+        
+        context_btn.click(fn=show_context, outputs=context_output)
     
     interface.launch(
         server_name="0.0.0.0",
