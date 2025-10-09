@@ -25,7 +25,7 @@ class ArxivSettings(BaseConfigSettings):
     )
 
     base_url: str = "https://export.arxiv.org/api/query"
-    #pdf_cache_dir: str = "./data/arxiv_pdfs"
+    pdf_cache_dir: str = "./data/arxiv_pdfs"
     rate_limit_delay: float = 3.0
     timeout_seconds: int = 30
     max_results: int = 15
