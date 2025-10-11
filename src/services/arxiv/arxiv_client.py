@@ -118,28 +118,7 @@ class ArxivClient:
         except Exception as e:
             logger.error(f"Failed to fetch papers from arXiv: {e}")
             raise ArxivAPIException(f"Unexpected error fetching papers from arXiv: {e}")
-    def _parse_single_entry(self, entry: ET.Element) -> Optional[ArxivPaper]:
-        """
-        Parse a single entry from arXiv XML response.
-
-        Args:
-            entry: XML entry element
-
-        Returns:
-            ArxivPaper object or None if parsing fails
-        """
-
-        try:
-            # Extract basic metadata
-            arxiv_id = self._get_arxiv_id(entry)
-            if not arxiv_id:
-                return None
-            
-
-        except Exception as e:
-            logger.error(f"Failed to parse entry: {e}")
-            return None
-        
+    
     def _get_text(self, element: ET.Element, path: str, clean_newlines: bool = False) -> str:
         """
         Extract text from XML element safely.
@@ -177,7 +156,7 @@ class ArxivClient:
                     url = url.replace("http://arxiv.org/", "https://arxiv.org/")
                 return url
         return ""
-    def __parse_single_entry(self, entry: ET.Element) -> Optional[ArxivPaper]:
+    def _parse_single_entry(self, entry: ET.Element) -> Optional[ArxivPaper]:
         """
         Parse a single entry from arXiv XML response.
 
@@ -190,12 +169,13 @@ class ArxivClient:
         try:
 
             # Extract paper ID
-            paper_id = entry.find('atom:id', self.namespaces)
-            if paper_id and paper_id.text:
-                paper_id = paper_id.text.split('/')[-1]  # Extract ID from URL
-            else: return None   #logger.info(f"Fetched {paper_id} paper from arXiv")
-
-            
+            paper_id_elem = entry.find('atom:id', self.namespaces)
+            if paper_id_elem is None or paper_id_elem.text is None:
+                logger.warning(f"No paper_id found in entry: {entry}")
+                return None
+            else:
+                paper_id = paper_id_elem.text.split('/')[-1]  # Extract ID from URL
+                logger.info(f"Fetched {paper_id} paper from arXiv")
 
             #Extract authors
             authors = []
@@ -222,33 +202,33 @@ class ArxivClient:
             )
             return paper
         
+        except Exception as e:
+            logger.error(f"Failed to parse entry: {e}")
+            return None
+        
+    def _parse_response(self, xml_content: str) -> List[ArxivPaper]:
+        """Parse arXiv API XML response."""
+        try:
+            root = ET.fromstring(xml_content)
+            papers = []
+            
+            # Find all entry elements
+            entries = root.findall('.//atom:entry', self.namespaces)
+            total_entries = len(entries)
+            logger.info(f"Found {total_entries} entries in XML response")
+            for i, entry in enumerate(entries):
+                logger.info(f"Processing entry {i+1}/{total_entries}")
+                paper = self._parse_single_entry(entry)
+                if paper:
+                    papers.append(paper)
+            return papers
         except ET.ParseError as e:
             logger.error(f"Failed to parse arXiv XML response: {e}")
             raise ArxivParseError(f"Failed to parse arXiv XML response: {e}")
         except Exception as e:
             logger.error(f"Unexpected error parsing arXiv response: {e}")
             raise ArxivParseError(f"Unexpected error parsing arXiv response: {e}")
-        
-    def _parse_response(self, xml_content: str) -> List[ArxivPaper]:
-        """Parse arXiv API XML response."""
-        root = ET.fromstring(xml_content)
-        
-        papers = []
-        
-        # Find all entry elements
-        entries = root.findall('.//atom:entry', self.namespaces)
-        total_entries = len(entries)
-        logger.info(f"Found {total_entries} entries in XML response")
-        for i, entry in entries:
-            logger.info(f"Processing entry {i}/{total_entries}")
-            
-                papers.append(paper)
-                
-            except Exception as e:
-                logger.warning(f"Failed to parse paper entry: {e}")
-                continue
         #logger.info(f"Returning {len(papers)} papers")
-        return papers
 
 
 
