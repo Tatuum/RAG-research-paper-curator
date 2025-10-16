@@ -1,16 +1,34 @@
 import gradio as gr
 import asyncio
 import logging
-import tempfile
-import requests
+from functools import lru_cache
+from typing import Tuple, Any
 from pathlib import Path
 from src.services.arxiv.arxiv_client import ArxivClient
 from src.services.pdf_parser.parser import PDFParserService
 from config import get_settings
-#from src.services.metadata_fetcher import MetadataFetcher
+from src.services.metadata_fetcher import MetadataFetcher
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
+@lru_cache(maxsize=1)
+def get_cached_services() -> Tuple[Any, Any, Any]:
+    """Get cached service instances using lru_cache for automatic memoization.
+
+    :returns: Tuple of (arxiv_client, pdf_parser, metadata_fetcher)
+    """
+    logger.info("Initializing services (cached with lru_cache)")
+
+    # Initialize core services
+    arxiv_client = make_arxiv_client()
+    pdf_parser = make_pdf_parser_service()
+
+    # Create metadata fetcher with dependencies
+    metadata_fetcher = make_metadata_fetcher(arxiv_client, pdf_parser)
+
+    logger.info("All services initialized and cached with lru_cache")
+    return arxiv_client, pdf_parser, metadata_fetcher
 
 async def search_papers():
     """Search for papers and return formatted titles."""
@@ -57,40 +75,35 @@ async def show_context():
                 result += f"=== Paper {i}: {paper.title} ===\n"
                 result += f"PDF URL: {paper.pdf_url}\n\n"
                 
-                # Download PDF to temporary file
-                with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
-                    temp_path = Path(temp_file.name)
+                # Download PDF using ArxivClient
+                temp_path = await client.download_pdf(paper)
+                
+                if temp_path is None:
+                    result += "Failed to download PDF.\n\n"
+                    continue
                     
-                    # Download PDF
-                    response = requests.get(paper.pdf_url, timeout=30)
-                    response.raise_for_status()
-                    temp_path.write_bytes(response.content)
-                    
-                    # Parse PDF
-                    pdf_content = await pdf_parser.parse_pdf(temp_path)
-                    
-                    if pdf_content and pdf_content.sections:
-                        # Show first section or abstract
-                        first_section = pdf_content.sections[0]
-                        result += f"Section: {first_section.title}\n"
-                        # Show first 500 characters of content
-                        content_preview = first_section.content[:500]
-                        if len(first_section.content) > 500:
-                            content_preview += "..."
-                        result += f"Content: {content_preview}\n\n"
+                # Parse PDF
+                pdf_content = await pdf_parser.parse_pdf(temp_path)
+                
+                if pdf_content and pdf_content.sections:
+                    # Show first section or abstract
+                    first_section = pdf_content.sections[0]
+                    result += f"Section: {first_section.title}\n"
+                    # Show first 500 characters of content
+                    content_preview = first_section.content[:500]
+                    if len(first_section.content) > 500:
+                        content_preview += "..."
+                    result += f"Content: {content_preview}\n\n"
+                else:
+                    result += "Could not extract structured content from PDF.\n"
+                    if pdf_content and pdf_content.raw_text:
+                        # Fallback to raw text
+                        raw_preview = pdf_content.raw_text[:500]
+                        if len(pdf_content.raw_text) > 500:
+                            raw_preview += "..."
+                        result += f"Raw text preview: {raw_preview}\n\n"
                     else:
-                        result += "Could not extract structured content from PDF.\n"
-                        if pdf_content and pdf_content.raw_text:
-                            # Fallback to raw text
-                            raw_preview = pdf_content.raw_text[:500]
-                            if len(pdf_content.raw_text) > 500:
-                                raw_preview += "..."
-                            result += f"Raw text preview: {raw_preview}\n\n"
-                        else:
-                            result += "No content extracted from PDF.\n\n"
-                    
-                    # Clean up temp file
-                    temp_path.unlink()
+                        result += "No content extracted from PDF.\n\n"
                     
             except Exception as e:
                 result += f"Error parsing paper {i}: {str(e)}\n\n"
@@ -98,6 +111,18 @@ async def show_context():
         
         return result
         
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+async def test_metadata_fetcher():
+    """Test the metadata fetcher."""
+    try:
+        arxiv_client, _, metadata_fetcher = get_cached_services()
+        max_results = arxiv_client.max_results
+        papers = await client.fetch_papers(max_results=3)
+        metadata_fetcher = MetadataFetcher(client, pdf_parser, settings=settings.metadata_fetcher)
+        pdf_results = await metadata_fetcher.fetch_and_process_papers(papers)
+        return pdf_results
     except Exception as e:
         return f"Error: {str(e)}"
 

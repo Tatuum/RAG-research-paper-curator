@@ -24,3 +24,11 @@ class PDFParsingException(ParsingException):
 
 class PDFValidationError(PDFParsingException):
     """Exception raised when PDF file validation fails."""
+
+
+class MetadataFetchingException(Exception):
+    """Base exception for metadata fetching pipeline errors."""
+
+
+class PipelineException(MetadataFetchingException):
+    """Exception raised during pipeline execution."""
