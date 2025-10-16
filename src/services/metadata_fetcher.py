@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, Any
+from typing import Dict, Any, List
 import logging
 from pathlib import Path
 from typing import Optional
@@ -18,7 +18,7 @@ class MetadataFetcher:
 
     def __init__(self, 
                  arxiv_client: ArxivClient,
-                 pdf_parser: PdfParserService,
+                 pdf_parser: PDFParserService,
                  pdf_cache_dir: Optional[Path] = None,
                  max_concurrent_downloads: int = 5,
                  max_concurrent_parsing: int = 3,

@@ -62,6 +62,7 @@ class Settings(BaseConfigSettings):
     #service_name: str = "rag-api"
 
     arxiv: ArxivSettings = Field(default_factory=ArxivSettings)
+    pdf_parser: PDFParserSettings = Field(default_factory=PDFParserSettings)
 
 def get_settings() -> Settings:
     return Settings()

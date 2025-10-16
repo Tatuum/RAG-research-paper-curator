@@ -8,6 +8,10 @@ from src.services.arxiv.arxiv_client import ArxivClient
 from src.services.pdf_parser.parser import PDFParserService
 from config import get_settings
 from src.services.metadata_fetcher import MetadataFetcher
+from src.services.arxiv.factory import make_arxiv_client
+from src.services.pdf_parser.factory import make_pdf_parser_service
+from src.services.metadata_fetcher import make_metadata_fetcher
+
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -119,9 +123,8 @@ async def test_metadata_fetcher():
     try:
         arxiv_client, _, metadata_fetcher = get_cached_services()
         max_results = arxiv_client.max_results
-        papers = await client.fetch_papers(max_results=3)
-        metadata_fetcher = MetadataFetcher(client, pdf_parser, settings=settings.metadata_fetcher)
-        pdf_results = await metadata_fetcher.fetch_and_process_papers(papers)
+        logger.info(f"Using default max_results from config: {max_results}")
+        pdf_results = await metadata_fetcher.fetch_and_process_papers(max_results=max_results)
         return pdf_results
     except Exception as e:
         return f"Error: {str(e)}"
@@ -138,7 +141,7 @@ def main():
         context_btn = gr.Button("Show the first paragraph of each paper", variant="primary")
         context_output = gr.Textbox(label="Context", lines=15)
         
-        context_btn.click(fn=show_context, outputs=context_output)
+        context_btn.click(fn=test_metadata_fetcher, outputs=context_output)
     
     interface.launch(
         server_name="0.0.0.0",
