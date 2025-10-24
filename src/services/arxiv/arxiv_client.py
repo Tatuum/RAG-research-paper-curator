@@ -137,6 +137,23 @@ class ArxivClient:
 
         text = elem.text.strip()
         return text.replace("\n", " ") if clean_newlines else text
+
+    def _get_categories(self, entry: ET.Element) -> List[str]:
+        """
+        Extract categories from entry.
+
+        Args:
+            entry: XML entry element
+
+        Returns:
+            List of category terms
+        """
+        categories = []
+        for category in entry.findall("atom:category", self.namespaces):
+            term = category.get("term")
+            if term:
+                categories.append(term)
+        return categories
     
     def _get_pdf_url(self, entry: ET.Element) -> str:
         """
@@ -169,13 +186,13 @@ class ArxivClient:
         try:
 
             # Extract paper ID
-            paper_id_elem = entry.find('atom:id', self.namespaces)
-            if paper_id_elem is None or paper_id_elem.text is None:
-                logger.warning(f"No paper_id found in entry: {entry}")
+            arxiv_id_elem = entry.find('atom:id', self.namespaces)
+            if arxiv_id_elem is None or arxiv_id_elem.text is None:
+                logger.warning(f"No arxiv_id found in entry: {entry}")
                 return None
             else:
-                paper_id = paper_id_elem.text.split('/')[-1]  # Extract ID from URL
-                logger.info(f"Fetched {paper_id} paper from arXiv")
+                arxiv_id = arxiv_id_elem.text.split('/')[-1]  # Extract ID from URL
+                logger.info(f"Fetched {arxiv_id} paper from arXiv")
 
             #Extract authors
             authors = []
@@ -192,12 +209,14 @@ class ArxivClient:
             title = self._get_text(entry, "atom:title", clean_newlines=True)
             abstract = self._get_text(entry, "atom:summary", clean_newlines=True)
             pdf_url = self._get_pdf_url(entry)
+            categories = self._get_categories(entry)
                 
             paper = ArxivPaper(
-                paper_id=paper_id,
+                arxiv_id=arxiv_id,
                 title=title,
                 abstract=abstract,
                 authors=authors,
+                categories=categories,
                 pdf_url=pdf_url
             )
             return paper

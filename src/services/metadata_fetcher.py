@@ -98,7 +98,7 @@ class MetadataFetcher:
             logger.info(
                 f"Pipeline completed: {results['papers_fetched']} papers, {results['pdfs_downloaded']} PDFs, {len(results['errors'])} errors"
             )
-            return pdf_results
+            return results
         except Exception as e:
             logger.error(f"Pipeline error: {e}")
             results["errors"].append(f"Pipeline error: {str(e)}")
