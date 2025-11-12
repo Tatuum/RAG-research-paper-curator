@@ -54,6 +54,16 @@ class PDFParserSettings(BaseConfigSettings):
     max_file_size_mb: int = 20
     do_ocr: bool = False
     do_table_structure: bool = True
+
+class DatabaseSettings(BaseConfigSettings):
+    model_config = SettingsConfigDict(
+        env_file=[".env", str(ENV_FILE_PATH)],
+        env_prefix="DATABASE__",
+        extra="ignore",
+        frozen=True,
+        case_sensitive=False,
+    )
+    url: str = "postgresql+psycopg2://rag_user:rag_password@localhost:5432/rag_db"
     
 class Settings(BaseConfigSettings):
     app_version: str = "0.1.0"
@@ -63,6 +73,7 @@ class Settings(BaseConfigSettings):
 
     arxiv: ArxivSettings = Field(default_factory=ArxivSettings)
     pdf_parser: PDFParserSettings = Field(default_factory=PDFParserSettings)
+    database: DatabaseSettings = Field(default_factory=DatabaseSettings)
 
 def get_settings() -> Settings:
     return Settings()

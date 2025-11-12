@@ -1,25 +1,27 @@
-import asyncio
-from src.services.arxiv.arxiv_client import ArxivClient
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan for the API.
+    """
+    print("Starting up the API...")
+
+    yield
+
+    print("Shutting down the API...")
+    # Cleanup
+   
 
 
-async def main():
-    """Example usage of the arXiv client."""
-    client = ArxivClient()
-    
-    print("Fetching recent AI papers from arXiv...")
-    papers = await client.fetch_papers(
-        query="cat:cs.AI",
-        max_results=5
-    )
-    
-    for i, paper in enumerate(papers, 1):
-        print(f"\n{i}. {paper.title}")
-        print(f"   Authors: {', '.join(paper.authors)}")
-        print(f"   PDF: {paper.pdf_url}")
-        print("-" * 80)
+app = FastAPI(
+    title="Scientific Paper Curator API",
+    description="Personal scientific paper curator with RAG capabilities",
+    version="0.1.0",
+    lifespan=lifespan,
+)
 
-    
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
