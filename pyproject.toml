@@ -5,14 +5,19 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.17.1",
     "docling>=2.55.1",
+    "fastapi>=0.117.1",
     "gradio>=5.47.0",
     "httpx>=0.28.1",
     "numpy<2.0",
+    "psycopg2-binary>=2.9.11",
     "pydantic>=2.11.3",
     "pydantic-settings>=2.10.1",
+    "sqlalchemy>=2.0.44",
     "torch==2.2.2",
     "torchvision==0.17.2",
+    "uvicorn>=0.37.0",
 ]
 
 [dependency-groups]

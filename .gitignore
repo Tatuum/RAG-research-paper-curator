@@ -140,6 +140,14 @@ cython_debug/
 .cursorignore
 cursor-*
 
+# Claude Code specific files
+.claude_code/
+claude_session_*
+.claude_session/
+*.claude_session
+.claude/
+CLAUDE.md
+
 # PyCharm
 .idea/
 
@@ -181,6 +189,7 @@ test_data/
 
 #guides
 guides/
+PROGRESS.md
 
 # Notebooks
 notebooks/
