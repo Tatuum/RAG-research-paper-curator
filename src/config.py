@@ -55,16 +55,19 @@ class PDFParserSettings(BaseConfigSettings):
     do_ocr: bool = False
     do_table_structure: bool = True
 
-class DatabaseSettings(BaseConfigSettings):
+class PostgresSettings(BaseConfigSettings):
     model_config = SettingsConfigDict(
         env_file=[".env", str(ENV_FILE_PATH)],
-        env_prefix="DATABASE__",
+        env_prefix="POSTGRES__",
         extra="ignore",
         frozen=True,
         case_sensitive=False,
     )
-    url: str = "postgresql+psycopg2://rag_user:rag_password@localhost:5432/rag_db"
-    
+    database_url: str = "postgresql+psycopg2://rag_paper_user:rag_paper_password@localhost:5433/rag_paper_db"
+    echo_sql: bool = False
+    pool_size: int = 20
+    max_overflow: int = 0
+
 class Settings(BaseConfigSettings):
     app_version: str = "0.1.0"
     debug: bool = True
@@ -73,7 +76,7 @@ class Settings(BaseConfigSettings):
 
     arxiv: ArxivSettings = Field(default_factory=ArxivSettings)
     pdf_parser: PDFParserSettings = Field(default_factory=PDFParserSettings)
-    database: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    postgres: PostgresSettings = Field(default_factory=PostgresSettings)
 
 def get_settings() -> Settings:
     return Settings()

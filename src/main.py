@@ -7,13 +7,17 @@ async def lifespan(app: FastAPI):
     Lifespan for the API.
     """
     print("Starting up the API...")
+    # Create database tables on startup
+    from src.db.postgresql import Base, engine
+    from src.models.paper import Paper  # Import models so Base knows about them
 
+    print("Creating database tables...")
+    Base.metadata.create_all(bind=engine)
+    print("Database tables ready!")
     yield
 
     print("Shutting down the API...")
     # Cleanup
-   
-
 
 app = FastAPI(
     title="Scientific Paper Curator API",
