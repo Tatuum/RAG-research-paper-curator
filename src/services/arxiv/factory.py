@@ -1,6 +1,6 @@
-from src.services.arxiv.arxiv_client import ArxivClient
 from src.config import get_settings
-from src.config import ArxivSettings
+from src.services.arxiv.arxiv_client import ArxivClient
+
 
 def make_arxiv_client() -> ArxivClient:
     """Factory function to create an arXiv client instance.

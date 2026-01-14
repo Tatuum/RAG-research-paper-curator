@@ -2,16 +2,19 @@ import asyncio
 import logging
 import time
 import xml.etree.ElementTree as ET
-from typing import List, Optional
 from functools import cached_property
-from urllib.parse import urlencode
 from pathlib import Path
-from src.config import get_settings
-from src.schemas.arxiv.paper import ArxivPaper
-from src.exceptions import ArxivAPIException, ArxivAPITimeoutError, ArxivAPIRateLimitError, ArxivParseError
+from typing import List, Optional
+from urllib.parse import urlencode
+
 import httpx
-from src.config import ArxivSettings
-from pydantic import BaseModel
+from src.config import ArxivSettings, get_settings
+from src.exceptions import (
+    ArxivAPIException,
+    ArxivAPITimeoutError,
+    ArxivParseError,
+)
+from src.schemas.arxiv.paper import ArxivPaper
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +32,11 @@ class ArxivClient:
         cache_dir = Path(self._settings.pdf_cache_dir)
         cache_dir.mkdir(parents=True, exist_ok=True)
         return cache_dir
-    
+
     @property
     def base_url(self) -> str:
         return self._settings.base_url
-    
+
     @property
     def namespaces(self) -> dict:
         return self._settings.namespaces
@@ -101,24 +104,24 @@ class ArxivClient:
                 response = await client.get(url)
                 response.raise_for_status()
                 xml_data = response.text
-            
+
             papers = self._parse_response(xml_data)
             logger.info(f"Fetched {len(papers)} papers")
 
             return papers
-            
+
         except httpx.TimeoutException as e:
             logger.error(f"arXiv API timeout: {e}")
             raise ArxivAPITimeoutError(f"arXiv API request timed out: {e}")
-        
+
         except httpx.HTTPStatusError as e:
             logger.error(f"arXiv API HTTP error: {e}")
             raise ArxivAPIException(f"arXiv API returned error {e.response.status_code}: {e}")
-        
+
         except Exception as e:
             logger.error(f"Failed to fetch papers from arXiv: {e}")
             raise ArxivAPIException(f"Unexpected error fetching papers from arXiv: {e}")
-    
+
     def _get_text(self, element: ET.Element, path: str, clean_newlines: bool = False) -> str:
         """
         Extract text from XML element safely.
@@ -154,7 +157,7 @@ class ArxivClient:
             if term:
                 categories.append(term)
         return categories
-    
+
     def _get_pdf_url(self, entry: ET.Element) -> str:
         """
         Extract PDF URL from entry links.
@@ -205,12 +208,12 @@ class ArxivClient:
                 if name:
                     authors.append(name)
             # logger.info(f"Entry {i}: Extracted {len(authors)} authors")
-        
+
             title = self._get_text(entry, "atom:title", clean_newlines=True)
             abstract = self._get_text(entry, "atom:summary", clean_newlines=True)
             pdf_url = self._get_pdf_url(entry)
             categories = self._get_categories(entry)
-                
+
             paper = ArxivPaper(
                 arxiv_id=arxiv_id,
                 title=title,
@@ -220,17 +223,17 @@ class ArxivClient:
                 pdf_url=pdf_url
             )
             return paper
-        
+
         except Exception as e:
             logger.error(f"Failed to parse entry: {e}")
             return None
-        
+
     def _parse_response(self, xml_content: str) -> List[ArxivPaper]:
         """Parse arXiv API XML response."""
         try:
             root = ET.fromstring(xml_content)
             papers = []
-            
+
             # Find all entry elements
             entries = root.findall('.//atom:entry', self.namespaces)
             total_entries = len(entries)
@@ -289,7 +292,7 @@ class ArxivClient:
         """
         safe_filename = arxiv_id.replace("/", "_") + ".pdf"
         return self.pdf_cache_dir / safe_filename
-    
+
     async def _download_with_retry(self, url: str, path: Path, max_retries: Optional[int] = None) -> bool:
         """Download a file with retry logic."""
         if max_retries is None:
@@ -347,12 +350,12 @@ async def main():
 
     # Create arXiv client with explicit settings
     client = ArxivClient(settings=settings.arxiv)
-    
+
     print("Fetching recent AI papers from arXiv...")
     papers = await client.fetch_papers(
         max_results=5,
     )
-    
+
     for i, paper in enumerate(papers, 1):
         print(f"\n{i}. {paper.title}")
    #     print(f"   PDF: {paper.pdf_url}")
@@ -360,4 +363,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())

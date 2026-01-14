@@ -1,6 +1,7 @@
 from pathlib import Path
-from pydantic import Field
 from typing import Literal
+
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT_PATH = Path(__file__).parent.parent

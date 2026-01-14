@@ -1,24 +1,23 @@
 import logging
 from pathlib import Path
-import pypdfium2 as pdfium
 from typing import Optional
-from src.exceptions import PDFParsingException, PDFValidationError
 
+import pypdfium2 as pdfium
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
-from src.exceptions import PDFValidationError
-from src.schemas.pdf_parser.models import PdfContent, PaperSection, ParserType
+from src.exceptions import PDFParsingException, PDFValidationError
+from src.schemas.pdf_parser.models import PaperSection, ParserType, PdfContent
 
 logger = logging.getLogger(__name__)
 
 class DoclingParser:
     """Docling PDF parser for scientific document processing."""
     def __init__(
-            self, 
-            max_pages: int, 
-            max_file_size_mb: int, 
-            do_ocr: bool = False, 
+            self,
+            max_pages: int,
+            max_file_size_mb: int,
+            do_ocr: bool = False,
             do_table_structure: bool = True):
         """Initialize DocumentConverter with optimized pipeline options.
 
@@ -91,7 +90,7 @@ class DoclingParser:
         except Exception as e:
             logger.error(f"Error validating PDF {pdf_path}: {e}")
             raise PDFValidationError(f"Error validating PDF {pdf_path}: {e}")
-        
+
     async def parse_pdf(self, pdf_path: Path) -> Optional[PdfContent]:
         """Parse PDF using Docling parser.
         Limited to 20 pages to avoid memory issues with large papers.

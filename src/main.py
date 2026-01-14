@@ -1,5 +1,7 @@
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -9,7 +11,6 @@ async def lifespan(app: FastAPI):
     print("Starting up the API...")
     # Create database tables on startup
     from src.db.postgresql import Base, engine
-    from src.models.paper import Paper  # Import models so Base knows about them
 
     print("Creating database tables...")
     Base.metadata.create_all(bind=engine)

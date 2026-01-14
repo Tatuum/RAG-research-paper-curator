@@ -1,5 +1,7 @@
+from typing import Dict, Optional
+
 from pydantic import BaseModel, Field
-from typing import Optional, Dict
+
 
 class ServiceStatus(BaseModel):
     """

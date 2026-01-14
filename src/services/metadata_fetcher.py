@@ -1,22 +1,21 @@
 import asyncio
-from typing import Dict, Any, List
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, List, Optional
+
+from src.config import Settings
+from src.exceptions import MetadataFetchingException, PipelineException
+from src.schemas.arxiv.paper import ArxivPaper
+from src.schemas.pdf_parser.models import ArxivMetadata, ParsedPaper
 from src.services.arxiv.arxiv_client import ArxivClient
 from src.services.pdf_parser.parser import PDFParserService
-from src.schemas.arxiv.paper import ArxivPaper
-from src.config import Settings
-from src.schemas.pdf_parser.models import ArxivMetadata, ParsedPaper
-from src.exceptions import MetadataFetchingException, PipelineException
-
 
 logger = logging.getLogger(__name__)
 
 class MetadataFetcher:
     """Service for fetching arXiv papers with PDF processing."""
 
-    def __init__(self, 
+    def __init__(self,
                  arxiv_client: ArxivClient,
                  pdf_parser: PDFParserService,
                  pdf_cache_dir: Optional[Path] = None,
@@ -51,7 +50,7 @@ class MetadataFetcher:
 
 
     async def fetch_and_process_papers(
-        self, 
+        self,
         max_results: Optional[int] = None,
         ) -> Dict[str, Any]:
         """Fetch papers from arXiv, process PDFs.
@@ -74,7 +73,7 @@ class MetadataFetcher:
         try:
             # Step 1: Fetch paper metadata from arXiv
             papers = await self.arxiv_client.fetch_papers(
-                max_results=5, 
+                max_results=5,
             )
             results["papers_fetched"] = len(papers)
 
@@ -145,7 +144,7 @@ class MetadataFetcher:
         pipeline_results = await asyncio.gather(*pipeline_tasks, return_exceptions=True)
 
         # Process results with detailed error tracking
-        for paper, result in zip(papers, pipeline_results):
+        for paper, result in zip(papers, pipeline_results, strict=False):
             if isinstance(result, Exception):
                 error_msg = f"Pipeline error for {paper.arxiv_id}: {str(result)}"
                 logger.error(error_msg)

@@ -4,9 +4,9 @@ from typing import Generator, Optional
 
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session, sessionmaker, declarative_base
-from src.db.interfaces.base import BaseDatabase
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from src.config import PostgresSettings
+from src.db.interfaces.base import BaseDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,6 @@ class PostgreSQLDatabase(BaseDatabase):
               existing_tables = inspector.get_table_names()
 
               # Import models so Base knows about them
-              from src.models.paper import Paper
 
               # Create tables if they don't exist
               Base.metadata.create_all(bind=self.engine)
