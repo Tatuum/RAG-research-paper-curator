@@ -25,6 +25,11 @@ class PDFParsingException(ParsingException):
 class PDFValidationError(PDFParsingException):
     """Exception raised when PDF file validation fails."""
 
+class PDFDownloadException(Exception):
+    """Base exception for PDF download-related errors."""
+
+class PDFDownloadTimeoutError(PDFDownloadException):
+    """Exception raised when PDF download times out."""
 
 class MetadataFetchingException(Exception):
     """Base exception for metadata fetching pipeline errors."""

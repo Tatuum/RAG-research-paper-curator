@@ -18,7 +18,12 @@ class PDFParserService:
                  do_ocr: bool = False,
                  do_table_structure: bool = True):
 
-        self.parser_service = DoclingParser(max_pages=max_pages, max_file_size_mb=max_file_size_mb, do_ocr=do_ocr, do_table_structure=do_table_structure)
+        self.parser_service = DoclingParser(
+            max_pages=max_pages,
+            max_file_size_mb=max_file_size_mb,
+            do_ocr=do_ocr,
+            do_table_structure=do_table_structure
+        )
 
     async def parse_pdf(self, pdf_path: Path) -> Optional[PdfContent]:
         """Parse a PDF file and return the content.
@@ -42,4 +47,4 @@ class PDFParserService:
             raise
         except Exception as e:
             logger.error(f"Docling parsing error for {pdf_path.name}: {e}")
-            raise PDFParsingException(f"Docling parsing error for {pdf_path.name}: {e}")
+            raise PDFParsingException(f"Docling parsing error for {pdf_path.name}: {e}") from e

@@ -7,12 +7,15 @@ from pathlib import Path
 from typing import List, Optional
 from urllib.parse import urlencode
 
+import aiofiles
 import httpx
 from src.config import ArxivSettings, get_settings
 from src.exceptions import (
     ArxivAPIException,
     ArxivAPITimeoutError,
     ArxivParseError,
+    PDFDownloadException,
+    PDFDownloadTimeoutError,
 )
 from src.schemas.arxiv.paper import ArxivPaper
 
@@ -112,15 +115,15 @@ class ArxivClient:
 
         except httpx.TimeoutException as e:
             logger.error(f"arXiv API timeout: {e}")
-            raise ArxivAPITimeoutError(f"arXiv API request timed out: {e}")
+            raise ArxivAPITimeoutError(f"arXiv API request timed out: {e}") from e
 
         except httpx.HTTPStatusError as e:
             logger.error(f"arXiv API HTTP error: {e}")
-            raise ArxivAPIException(f"arXiv API returned error {e.response.status_code}: {e}")
+            raise ArxivAPIException(f"arXiv API returned error {e.response.status_code}: {e}") from e
 
         except Exception as e:
             logger.error(f"Failed to fetch papers from arXiv: {e}")
-            raise ArxivAPIException(f"Unexpected error fetching papers from arXiv: {e}")
+            raise ArxivAPIException(f"Unexpected error fetching papers from arXiv: {e}") from e
 
     def _get_text(self, element: ET.Element, path: str, clean_newlines: bool = False) -> str:
         """
@@ -246,10 +249,10 @@ class ArxivClient:
             return papers
         except ET.ParseError as e:
             logger.error(f"Failed to parse arXiv XML response: {e}")
-            raise ArxivParseError(f"Failed to parse arXiv XML response: {e}")
+            raise ArxivParseError(f"Failed to parse arXiv XML response: {e}") from e
         except Exception as e:
             logger.error(f"Unexpected error parsing arXiv response: {e}")
-            raise ArxivParseError(f"Unexpected error parsing arXiv response: {e}")
+            raise ArxivParseError(f"Unexpected error parsing arXiv response: {e}") from e
         #logger.info(f"Returning {len(papers)} papers")
 
     async def download_pdf(self, paper: ArxivPaper, force_download: bool = False) -> Optional[Path]:
@@ -308,9 +311,9 @@ class ArxivClient:
                 async with httpx.AsyncClient(timeout=float(self.timeout_seconds)) as client:
                     async with client.stream("GET", url) as response:
                         response.raise_for_status()
-                        with open(path, "wb") as f:
+                        async with aiofiles.open(path, "wb") as f:
                             async for chunk in response.aiter_bytes():
-                                f.write(chunk)
+                                await f.write(chunk)
                 logger.info(f"Successfully downloaded to {path.name}")
                 return True
 
@@ -322,7 +325,7 @@ class ArxivClient:
                     await asyncio.sleep(wait_time)
                 else:
                     logger.error(f"PDF download failed after {max_retries} attempts due to timeout: {e}")
-                    raise PDFDownloadTimeoutError(f"PDF download timed out after {max_retries} attempts: {e}")
+                    raise PDFDownloadTimeoutError(f"PDF download timed out after {max_retries} attempts: {e}") from e
             except httpx.HTTPError as e:
                 if attempt < max_retries - 1:
                     wait_time = self._settings.download_retry_delay_base * (attempt + 1)  # Exponential backoff
@@ -331,10 +334,10 @@ class ArxivClient:
                     await asyncio.sleep(wait_time)
                 else:
                     logger.error(f"Failed after {max_retries} attempts: {e}")
-                    raise PDFDownloadException(f"PDF download failed after {max_retries} attempts: {e}")
+                    raise PDFDownloadException(f"PDF download failed after {max_retries} attempts: {e}") from e
             except Exception as e:
                 logger.error(f"Unexpected download error: {e}")
-                raise PDFDownloadException(f"Unexpected error during PDF download: {e}")
+                raise PDFDownloadException(f"Unexpected error during PDF download: {e}") from e
 
         # Clean up partial download
         if path.exists():

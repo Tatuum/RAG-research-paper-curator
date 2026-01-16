@@ -4,7 +4,7 @@ from typing import Any, Tuple
 
 import gradio as gr
 
-from config import get_settings
+from src.config import get_settings
 from src.services.arxiv.arxiv_client import ArxivClient
 from src.services.arxiv.factory import make_arxiv_client
 from src.services.metadata_fetcher import make_metadata_fetcher

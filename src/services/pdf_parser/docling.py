@@ -59,7 +59,8 @@ class DoclingParser:
             file_size = pdf_path.stat().st_size
             if file_size > self.max_file_size_bytes:
                 logger.warning(
-                    f"PDF file size ({file_size / 1024 / 1024:.1f}MB) exceeds limit ({self.max_file_size_bytes / 1024 / 1024:.1f}MB), skipping processing"
+                    f"PDF file size ({file_size / 1024 / 1024:.1f}MB) exceeds limit"
+                    f"({self.max_file_size_bytes / 1024 / 1024:.1f}MB), skipping processing"
                 )
                 raise PDFValidationError(
                     f"PDF file too large: {file_size / 1024 / 1024:.1f}MB > {self.max_file_size_bytes / 1024 / 1024:.1f}MB"
@@ -89,7 +90,7 @@ class DoclingParser:
             raise
         except Exception as e:
             logger.error(f"Error validating PDF {pdf_path}: {e}")
-            raise PDFValidationError(f"Error validating PDF {pdf_path}: {e}")
+            raise PDFValidationError(f"Error validating PDF {pdf_path}: {e}") from e
 
     async def parse_pdf(self, pdf_path: Path) -> Optional[PdfContent]:
         """Parse PDF using Docling parser.
@@ -162,18 +163,18 @@ class DoclingParser:
 
             if "not valid" in error_msg:
                 logger.error("PDF appears to be corrupted or not a valid PDF file")
-                raise PDFParsingException(f"PDF appears to be corrupted or invalid: {pdf_path}")
+                raise PDFParsingException(f"PDF appears to be corrupted or invalid: {pdf_path}") from e
             elif "timeout" in error_msg:
                 logger.error("PDF processing timed out - file may be too complex")
-                raise PDFParsingException(f"PDF processing timed out: {pdf_path}")
+                raise PDFParsingException(f"PDF processing timed out: {pdf_path}") from e
             elif "memory" in error_msg or "ram" in error_msg:
                 logger.error("Out of memory - PDF may be too large or complex")
-                raise PDFParsingException(f"Out of memory processing PDF: {pdf_path}")
+                raise PDFParsingException(f"Out of memory processing PDF: {pdf_path}") from e
             elif "max_num_pages" in error_msg or "page" in error_msg:
                 logger.error(f"PDF processing issue likely related to page limits (current limit: {self.max_pages} pages)")
                 raise PDFParsingException(
                     f"PDF processing failed, possibly due to page limit ({self.max_pages} pages). Error: {e}"
-                )
+                ) from e
             else:
-                raise PDFParsingException(f"Failed to parse PDF with Docling: {e}")
+                raise PDFParsingException(f"Failed to parse PDF with Docling: {e}") from e
 

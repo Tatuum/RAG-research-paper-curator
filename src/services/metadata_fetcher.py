@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional, TypedDict
 
 from src.config import Settings
 from src.exceptions import MetadataFetchingException, PipelineException
@@ -9,6 +9,26 @@ from src.schemas.arxiv.paper import ArxivPaper
 from src.schemas.pdf_parser.models import ArxivMetadata, ParsedPaper
 from src.services.arxiv.arxiv_client import ArxivClient
 from src.services.pdf_parser.parser import PDFParserService
+
+
+class PipelineResults(TypedDict):
+    """Results from fetch_and_process_papers."""
+    papers_fetched: int
+    pdfs_downloaded: int
+    pdfs_parsed: int
+    papers_stored: int
+    papers_indexed: int
+    errors: list[str]
+    processing_time: float
+
+class BatchResults(TypedDict):
+    """Results from _process_pdfs_batch."""
+    downloaded: int
+    parsed: int
+    parsed_papers: dict[str, ParsedPaper]
+    errors: list[str]
+    download_failures: list[str]
+    parse_failures: list[str]
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +72,7 @@ class MetadataFetcher:
     async def fetch_and_process_papers(
         self,
         max_results: Optional[int] = None,
-        ) -> Dict[str, Any]:
+        ) -> PipelineResults:
         """Fetch papers from arXiv, process PDFs.
 
         :param max_results: Maximum papers to fetch
@@ -61,7 +81,7 @@ class MetadataFetcher:
         :rtype: Dict[str, Any]
         """
 
-        results = {
+        results: PipelineResults = {
             "papers_fetched": 0,
             "pdfs_downloaded": 0,
             "pdfs_parsed": 0,
@@ -82,7 +102,6 @@ class MetadataFetcher:
                 return results
 
             # Step 2: Process the first PDF
-            pdf_results = {}
 
             pdf_results = await self._process_pdfs_batch(papers)
             results["pdfs_downloaded"] = pdf_results["downloaded"]
@@ -103,7 +122,7 @@ class MetadataFetcher:
             results["errors"].append(f"Pipeline error: {str(e)}")
             raise PipelineException(f"Pipeline execution failed: {e}") from e
 
-    async def _process_pdfs_batch(self, papers: List[ArxivPaper]) -> Dict[str, Any]:
+    async def _process_pdfs_batch(self, papers: List[ArxivPaper]) -> BatchResults:
         """
         Process PDFs for a batch of papers with async concurrency.
 
@@ -120,7 +139,7 @@ class MetadataFetcher:
         Returns:
             Dictionary with processing results and statistics
         """
-        results = {
+        results: BatchResults = {
             "downloaded": 0,
             "parsed": 0,
             "parsed_papers": {},
