@@ -1,11 +1,14 @@
-from pydantic import BaseModel, Field
 from enum import Enum
-from typing import List, Dict, Any, Optional
-    
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
+
+
 class ParserType(str, Enum):
     """PDF parser types."""
 
     DOCLING = "docling"
+
 
 class PaperSection(BaseModel):
     """Represents a section of a paper."""
@@ -14,6 +17,7 @@ class PaperSection(BaseModel):
     content: str = Field(..., description="Section content")
     level: int = Field(default=1, description="Section hierarchy level")
 
+
 class PdfContent(BaseModel):
     """PDF-specific content extracted by parsers like Docling."""
 
@@ -21,6 +25,7 @@ class PdfContent(BaseModel):
     raw_text: str = Field(..., description="Full extracted text")
     parser_used: ParserType = Field(..., description="Parser used for extraction")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Parser metadata")
+
 
 class ArxivMetadata(BaseModel):
     """Paper metadata from arXiv API."""

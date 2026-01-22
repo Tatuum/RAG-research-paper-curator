@@ -3,9 +3,9 @@ Simple launcher for the Gradio interface.
 Run this script to start the web UI for the arXiv Paper Curator RAG system.
 """
 
+import logging
 import sys
 from pathlib import Path
-import logging
 
 # Setup logging
 logging.basicConfig(
@@ -13,7 +13,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),  # This sends logs to terminal
-    ]
+    ],
 )
 logger = logging.getLogger(__name__)
 logger.info("Logging system initialized successfully")

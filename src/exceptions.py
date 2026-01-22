@@ -14,6 +14,7 @@ class ArxivAPIRateLimitError(ArxivAPIException):
 class ArxivParseError(ArxivAPIException):
     """Exception raised when arXiv API response parsing fails."""
 
+
 class ParsingException(Exception):
     """Base exception for parsing-related errors."""
 
@@ -24,6 +25,14 @@ class PDFParsingException(ParsingException):
 
 class PDFValidationError(PDFParsingException):
     """Exception raised when PDF file validation fails."""
+
+
+class PDFDownloadException(Exception):
+    """Base exception for PDF download-related errors."""
+
+
+class PDFDownloadTimeoutError(PDFDownloadException):
+    """Exception raised when PDF download times out."""
 
 
 class MetadataFetchingException(Exception):

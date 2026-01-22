@@ -1,8 +1,11 @@
-from sqlalchemy import Column, String, Text, Boolean, DateTime, JSON
-from src.db.interfaces.postgresql import Base
-from datetime import datetime, timezone
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
+from datetime import datetime, timezone
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+
+from src.db.interfaces.postgresql import Base
+
 
 class Paper(Base):
     __tablename__ = "papers"
@@ -16,7 +19,7 @@ class Paper(Base):
     categories = Column(JSON, nullable=False)
     pdf_url = Column(String, nullable=False)
 
-    #parsing metadata
+    # parsing metadata
     pdf_processed = Column(Boolean, nullable=False, default=False)
     parser_used = Column(String, nullable=True)
 

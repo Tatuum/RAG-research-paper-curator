@@ -1,29 +1,54 @@
 import asyncio
-from typing import Dict, Any, List
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, TypedDict
+
+from src.config import Settings
+from src.exceptions import MetadataFetchingException, PipelineException
+from src.schemas.arxiv.paper import ArxivPaper
+from src.schemas.pdf_parser.models import ArxivMetadata, ParsedPaper
 from src.services.arxiv.arxiv_client import ArxivClient
 from src.services.pdf_parser.parser import PDFParserService
-from src.schemas.arxiv.paper import ArxivPaper
-from src.config import Settings
-from src.schemas.pdf_parser.models import ArxivMetadata, ParsedPaper
-from src.exceptions import MetadataFetchingException, PipelineException
+
+
+class PipelineResults(TypedDict):
+    """Results from fetch_and_process_papers."""
+
+    papers_fetched: int
+    pdfs_downloaded: int
+    pdfs_parsed: int
+    papers_stored: int
+    papers_indexed: int
+    errors: list[str]
+    processing_time: float
+
+
+class BatchResults(TypedDict):
+    """Results from _process_pdfs_batch."""
+
+    downloaded: int
+    parsed: int
+    parsed_papers: dict[str, ParsedPaper]
+    errors: list[str]
+    download_failures: list[str]
+    parse_failures: list[str]
 
 
 logger = logging.getLogger(__name__)
 
+
 class MetadataFetcher:
     """Service for fetching arXiv papers with PDF processing."""
 
-    def __init__(self, 
-                 arxiv_client: ArxivClient,
-                 pdf_parser: PDFParserService,
-                 pdf_cache_dir: Optional[Path] = None,
-                 max_concurrent_downloads: int = 5,
-                 max_concurrent_parsing: int = 3,
-                 settings: Optional[Settings] = None,
-                 ):
+    def __init__(
+        self,
+        arxiv_client: ArxivClient,
+        pdf_parser: PDFParserService,
+        pdf_cache_dir: Optional[Path] = None,
+        max_concurrent_downloads: int = 5,
+        max_concurrent_parsing: int = 3,
+        settings: Optional[Settings] = None,
+    ):
         """Initialize metadata fetcher with services and settings.
 
         :param arxiv_client: Client for arXiv API operations
@@ -49,11 +74,10 @@ class MetadataFetcher:
         self.max_concurrent_parsing = max_concurrent_parsing
         self.settings = settings or get_settings()
 
-
     async def fetch_and_process_papers(
-        self, 
+        self,
         max_results: Optional[int] = None,
-        ) -> Dict[str, Any]:
+    ) -> PipelineResults:
         """Fetch papers from arXiv, process PDFs.
 
         :param max_results: Maximum papers to fetch
@@ -62,7 +86,7 @@ class MetadataFetcher:
         :rtype: Dict[str, Any]
         """
 
-        results = {
+        results: PipelineResults = {
             "papers_fetched": 0,
             "pdfs_downloaded": 0,
             "pdfs_parsed": 0,
@@ -74,7 +98,7 @@ class MetadataFetcher:
         try:
             # Step 1: Fetch paper metadata from arXiv
             papers = await self.arxiv_client.fetch_papers(
-                max_results=5, 
+                max_results=5,
             )
             results["papers_fetched"] = len(papers)
 
@@ -83,28 +107,25 @@ class MetadataFetcher:
                 return results
 
             # Step 2: Process the first PDF
-            pdf_results = {}
 
             pdf_results = await self._process_pdfs_batch(papers)
             results["pdfs_downloaded"] = pdf_results["downloaded"]
             results["pdfs_parsed"] = pdf_results["parsed"]
             results["errors"].extend(pdf_results["errors"])
-            #pdf_results = await self.pdf_parser.parse_pdf(papers[0].pdf_url)
+            # pdf_results = await self.pdf_parser.parse_pdf(papers[0].pdf_url)
 
-        #    results["pdfs_downloaded"] = pdf_results["downloaded"]
-        #    results["pdfs_parsed"] = pdf_results["parsed"]
-        #    results["errors"].extend(pdf_results["errors"])
+            #    results["pdfs_downloaded"] = pdf_results["downloaded"]
+            #    results["pdfs_parsed"] = pdf_results["parsed"]
+            #    results["errors"].extend(pdf_results["errors"])
 
-            logger.info(
-                f"Pipeline completed: {results['papers_fetched']} papers, {results['pdfs_downloaded']} PDFs, {len(results['errors'])} errors"
-            )
+            logger.info(f"Pipeline completed: {results['papers_fetched']} papers, {results['pdfs_downloaded']} PDFs, {len(results['errors'])} errors")
             return results
         except Exception as e:
             logger.error(f"Pipeline error: {e}")
             results["errors"].append(f"Pipeline error: {str(e)}")
             raise PipelineException(f"Pipeline execution failed: {e}") from e
 
-    async def _process_pdfs_batch(self, papers: List[ArxivPaper]) -> Dict[str, Any]:
+    async def _process_pdfs_batch(self, papers: List[ArxivPaper]) -> BatchResults:
         """
         Process PDFs for a batch of papers with async concurrency.
 
@@ -121,7 +142,7 @@ class MetadataFetcher:
         Returns:
             Dictionary with processing results and statistics
         """
-        results = {
+        results: BatchResults = {
             "downloaded": 0,
             "parsed": 0,
             "parsed_papers": {},
@@ -145,7 +166,7 @@ class MetadataFetcher:
         pipeline_results = await asyncio.gather(*pipeline_tasks, return_exceptions=True)
 
         # Process results with detailed error tracking
-        for paper, result in zip(papers, pipeline_results):
+        for paper, result in zip(papers, pipeline_results, strict=False):
             if isinstance(result, Exception):
                 error_msg = f"Pipeline error for {paper.arxiv_id}: {str(result)}"
                 logger.error(error_msg)
@@ -251,6 +272,7 @@ class MetadataFetcher:
             raise MetadataFetchingException(f"Pipeline error for {paper.arxiv_id}: {e}") from e
 
         return (download_success, parsed_paper)
+
 
 def make_metadata_fetcher(
     arxiv_client: ArxivClient,

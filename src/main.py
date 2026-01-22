@@ -1,5 +1,7 @@
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -8,16 +10,16 @@ async def lifespan(app: FastAPI):
     """
     print("Starting up the API...")
     # Create database tables on startup
-    from src.db.postgresql import Base, engine
-    from src.models.paper import Paper  # Import models so Base knows about them
+    from src.db.interfaces.postgresql import Base, Engine
 
     print("Creating database tables...")
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=Engine)
     print("Database tables ready!")
     yield
 
     print("Shutting down the API...")
     # Cleanup
+
 
 app = FastAPI(
     title="Scientific Paper Curator API",
@@ -25,6 +27,7 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
 
 @app.get("/")
 async def root():
