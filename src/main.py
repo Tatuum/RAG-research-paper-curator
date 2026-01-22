@@ -20,12 +20,14 @@ async def lifespan(app: FastAPI):
     print("Shutting down the API...")
     # Cleanup
 
+
 app = FastAPI(
     title="Scientific Paper Curator API",
     description="Personal scientific paper curator with RAG capabilities",
     version="0.1.0",
     lifespan=lifespan,
 )
+
 
 @app.get("/")
 async def root():

@@ -9,20 +9,13 @@ from .docling import DoclingParser
 
 logger = logging.getLogger(__name__)
 
+
 class PDFParserService:
     "Main service for parsing PDFs."
 
-    def __init__(self,
-                 max_pages: int,
-                 max_file_size_mb: int,
-                 do_ocr: bool = False,
-                 do_table_structure: bool = True):
-
+    def __init__(self, max_pages: int, max_file_size_mb: int, do_ocr: bool = False, do_table_structure: bool = True):
         self.parser_service = DoclingParser(
-            max_pages=max_pages,
-            max_file_size_mb=max_file_size_mb,
-            do_ocr=do_ocr,
-            do_table_structure=do_table_structure
+            max_pages=max_pages, max_file_size_mb=max_file_size_mb, do_ocr=do_ocr, do_table_structure=do_table_structure
         )
 
     async def parse_pdf(self, pdf_path: Path) -> Optional[PdfContent]:

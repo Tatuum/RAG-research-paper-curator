@@ -5,7 +5,8 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT_PATH = Path(__file__).parent.parent
-ENV_FILE_PATH = PROJECT_ROOT_PATH/ ".env"
+ENV_FILE_PATH = PROJECT_ROOT_PATH / ".env"
+
 
 class BaseConfigSettings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -15,6 +16,7 @@ class BaseConfigSettings(BaseSettings):
         env_nested_delimiter="__",
         case_sensitive=False,
     )
+
 
 class ArxivSettings(BaseConfigSettings):
     model_config = SettingsConfigDict(
@@ -38,9 +40,10 @@ class ArxivSettings(BaseConfigSettings):
 
     namespaces: dict = {
         "atom": "http://www.w3.org/2005/Atom",
-       # "opensearch": "http://a9.com/-/spec/opensearch/1.1/",
+        # "opensearch": "http://a9.com/-/spec/opensearch/1.1/",
         "arxiv": "http://arxiv.org/schemas/atom",
     }
+
 
 class PDFParserSettings(BaseConfigSettings):
     model_config = SettingsConfigDict(
@@ -56,6 +59,7 @@ class PDFParserSettings(BaseConfigSettings):
     do_ocr: bool = False
     do_table_structure: bool = True
 
+
 class PostgresSettings(BaseConfigSettings):
     model_config = SettingsConfigDict(
         env_file=[".env", str(ENV_FILE_PATH)],
@@ -69,6 +73,7 @@ class PostgresSettings(BaseConfigSettings):
     pool_size: int = 20
     max_overflow: int = 0
 
+
 class Settings(BaseConfigSettings):
     app_version: str = "0.1.0"
     debug: bool = True
@@ -78,6 +83,7 @@ class Settings(BaseConfigSettings):
     arxiv: ArxivSettings = Field(default_factory=ArxivSettings)
     pdf_parser: PDFParserSettings = Field(default_factory=PDFParserSettings)
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)
+
 
 def get_settings() -> Settings:
     return Settings()

@@ -13,7 +13,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),  # This sends logs to terminal
-    ]
+    ],
 )
 logger = logging.getLogger(__name__)
 logger.info("Logging system initialized successfully")

@@ -14,6 +14,7 @@ from src.services.pdf_parser.parser import PDFParserService
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+
 @lru_cache(maxsize=1)
 def get_cached_services() -> Tuple[Any, Any, Any]:
     """Get cached service instances using lru_cache for automatic memoization.
@@ -32,13 +33,14 @@ def get_cached_services() -> Tuple[Any, Any, Any]:
     logger.info("All services initialized and cached with lru_cache")
     return arxiv_client, pdf_parser, metadata_fetcher
 
+
 async def search_papers():
     """Search for papers and return formatted titles."""
     try:
         client = ArxivClient(settings=settings.arxiv)
         print("Fetching recent AI papers from arXiv...")
         papers = await client.fetch_papers(
-        max_results=5,
+            max_results=5,
         )
 
         if not papers:
@@ -53,6 +55,8 @@ async def search_papers():
 
     except Exception as e:
         return f"Error: {str(e)}"
+
+
 async def show_context():
     """Show the first paragraph of each paper by parsing PDFs."""
     try:
@@ -67,7 +71,7 @@ async def show_context():
             max_pages=20,  # Limit pages for testing
             max_file_size_mb=50,
             do_ocr=False,
-            do_table_structure=True
+            do_table_structure=True,
         )
 
         result = f"Found {len(papers)} papers. Parsing PDFs...\n\n"
@@ -116,6 +120,7 @@ async def show_context():
     except Exception as e:
         return f"Error: {str(e)}"
 
+
 async def test_metadata_fetcher():
     """Test the metadata fetcher."""
     try:
@@ -126,6 +131,7 @@ async def test_metadata_fetcher():
         return pdf_results
     except Exception as e:
         return f"Error: {str(e)}"
+
 
 def main():
     with gr.Blocks() as interface:

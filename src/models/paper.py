@@ -19,7 +19,7 @@ class Paper(Base):
     categories = Column(JSON, nullable=False)
     pdf_url = Column(String, nullable=False)
 
-    #parsing metadata
+    # parsing metadata
     pdf_processed = Column(Boolean, nullable=False, default=False)
     parser_used = Column(String, nullable=True)
 

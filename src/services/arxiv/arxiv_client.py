@@ -100,7 +100,7 @@ class ArxivClient:
 
         try:
             logger.info(f"Fetching {max_results} {self.search_category} papers from arXiv")
-        # Add rate limiting delay between all requests (arXiv recommends 3 seconds)
+            # Add rate limiting delay between all requests (arXiv recommends 3 seconds)
             await self._rate_limit()
 
             async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
@@ -179,6 +179,7 @@ class ArxivClient:
                     url = url.replace("http://arxiv.org/", "https://arxiv.org/")
                 return url
         return ""
+
     def _parse_single_entry(self, entry: ET.Element) -> Optional[ArxivPaper]:
         """
         Parse a single entry from arXiv XML response.
@@ -190,20 +191,19 @@ class ArxivClient:
             ArxivPaper object or None if parsing fails
         """
         try:
-
             # Extract paper ID
-            arxiv_id_elem = entry.find('atom:id', self.namespaces)
+            arxiv_id_elem = entry.find("atom:id", self.namespaces)
             if arxiv_id_elem is None or arxiv_id_elem.text is None:
                 logger.warning(f"No arxiv_id found in entry: {entry}")
                 return None
             else:
-                arxiv_id = arxiv_id_elem.text.split('/')[-1]  # Extract ID from URL
+                arxiv_id = arxiv_id_elem.text.split("/")[-1]  # Extract ID from URL
                 logger.info(f"Fetched {arxiv_id} paper from arXiv")
 
-            #Extract authors
+            # Extract authors
             authors = []
             author_elems = entry.findall("atom:author", self.namespaces)
-            #logger.info(f"Entry {i}: Found {len(author_elems)} author elements")
+            # logger.info(f"Entry {i}: Found {len(author_elems)} author elements")
 
             for author in author_elems:
                 name_elem = author.find("atom:name", self.namespaces)
@@ -217,14 +217,7 @@ class ArxivClient:
             pdf_url = self._get_pdf_url(entry)
             categories = self._get_categories(entry)
 
-            paper = ArxivPaper(
-                arxiv_id=arxiv_id,
-                title=title,
-                abstract=abstract,
-                authors=authors,
-                categories=categories,
-                pdf_url=pdf_url
-            )
+            paper = ArxivPaper(arxiv_id=arxiv_id, title=title, abstract=abstract, authors=authors, categories=categories, pdf_url=pdf_url)
             return paper
 
         except Exception as e:
@@ -238,11 +231,11 @@ class ArxivClient:
             papers = []
 
             # Find all entry elements
-            entries = root.findall('.//atom:entry', self.namespaces)
+            entries = root.findall(".//atom:entry", self.namespaces)
             total_entries = len(entries)
             logger.info(f"Found {total_entries} entries in XML response")
             for i, entry in enumerate(entries):
-                logger.info(f"Processing entry {i+1}/{total_entries}")
+                logger.info(f"Processing entry {i + 1}/{total_entries}")
                 paper = self._parse_single_entry(entry)
                 if paper:
                     papers.append(paper)
@@ -253,7 +246,7 @@ class ArxivClient:
         except Exception as e:
             logger.error(f"Unexpected error parsing arXiv response: {e}")
             raise ArxivParseError(f"Unexpected error parsing arXiv response: {e}") from e
-        #logger.info(f"Returning {len(papers)} papers")
+        # logger.info(f"Returning {len(papers)} papers")
 
     async def download_pdf(self, paper: ArxivPaper, force_download: bool = False) -> Optional[Path]:
         """
@@ -346,7 +339,6 @@ class ArxivClient:
         return False
 
 
-
 async def main():
     """Example usage of the arXiv client."""
     settings = get_settings()
@@ -361,7 +353,7 @@ async def main():
 
     for i, paper in enumerate(papers, 1):
         print(f"\n{i}. {paper.title}")
-   #     print(f"   PDF: {paper.pdf_url}")
+        #     print(f"   PDF: {paper.pdf_url}")
         print("-" * 80)
 
 

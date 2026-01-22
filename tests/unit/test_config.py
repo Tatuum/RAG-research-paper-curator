@@ -10,6 +10,7 @@ def test_settings_initialization():
     assert settings.environment == "development"
     assert settings.service_name == "rag-api"
 
+
 def test_settings_arxiv_defaults():
     """Test ArXiv default configuration."""
     settings = Settings()
