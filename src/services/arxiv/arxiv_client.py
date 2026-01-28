@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 
 import aiofiles
 import httpx
-from src.config import ArxivSettings, get_settings
+from src.config import ArxivSettings
 from src.exceptions import (
     ArxivAPIException,
     ArxivAPITimeoutError,
@@ -71,6 +71,8 @@ class ArxivClient:
     async def fetch_papers(
         self,
         start: int = 0,
+        sort_by: str = "submittedDate",
+        sort_order: str = "descending",
         max_results: Optional[int] = None,
     ) -> List[ArxivPaper]:
         """
@@ -93,6 +95,8 @@ class ArxivClient:
         params = {
             "search_query": search_query,
             "start": start,
+            "sortBy": sort_by,
+            "sortOrder": sort_order,
             "max_results": min(max_results, 2000),  # arXiv limit
         }
         safe = ":+[]"  # Don't encode :, +, [, ] characters needed for arXiv queries
@@ -214,10 +218,13 @@ class ArxivClient:
 
             title = self._get_text(entry, "atom:title", clean_newlines=True)
             abstract = self._get_text(entry, "atom:summary", clean_newlines=True)
+            published = self._get_text(entry, "atom:published")
             pdf_url = self._get_pdf_url(entry)
             categories = self._get_categories(entry)
 
-            paper = ArxivPaper(arxiv_id=arxiv_id, title=title, abstract=abstract, authors=authors, categories=categories, pdf_url=pdf_url)
+            paper = ArxivPaper(
+                arxiv_id=arxiv_id, title=title, abstract=abstract, authors=authors, categories=categories, pdf_url=pdf_url, published_date=published
+            )
             return paper
 
         except Exception as e:
@@ -337,25 +344,3 @@ class ArxivClient:
             path.unlink()
 
         return False
-
-
-async def main():
-    """Example usage of the arXiv client."""
-    settings = get_settings()
-
-    # Create arXiv client with explicit settings
-    client = ArxivClient(settings=settings.arxiv)
-
-    print("Fetching recent AI papers from arXiv...")
-    papers = await client.fetch_papers(
-        max_results=5,
-    )
-
-    for i, paper in enumerate(papers, 1):
-        print(f"\n{i}. {paper.title}")
-        #     print(f"   PDF: {paper.pdf_url}")
-        print("-" * 80)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
