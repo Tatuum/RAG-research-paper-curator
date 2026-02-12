@@ -83,7 +83,7 @@ class PostgreSQLDatabase(BaseDatabase):
         session = self.session_factory()
         try:
             yield session
-            session.commit()  # Auto-commit on success
+        # session.commit()  # Auto-commit on success
         except Exception:
             session.rollback()  # Auto-rollback on error
             raise
