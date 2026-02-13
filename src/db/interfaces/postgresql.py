@@ -4,13 +4,15 @@ from typing import Generator, Optional
 
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from src.config import PostgresSettings
 from src.db.interfaces.base import BaseDatabase
 
 logger = logging.getLogger(__name__)
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class PostgreSQLDatabase(BaseDatabase):
@@ -47,6 +49,7 @@ class PostgreSQLDatabase(BaseDatabase):
             existing_tables = inspector.get_table_names()
 
             # Import models so Base knows about them
+            from src.models import Paper  # noqa: F401
 
             # Create tables if they don't exist
             Base.metadata.create_all(bind=self.engine)
