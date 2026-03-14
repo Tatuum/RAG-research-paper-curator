@@ -18,6 +18,7 @@ class Paper(Base):
     abstract = Column(Text, nullable=False)
     categories = Column(JSON, nullable=False)
     pdf_url = Column(String, nullable=False)
+    published_date = Column(DateTime, nullable=False)
 
     # parsing metadata
     pdf_processed = Column(Boolean, nullable=False, default=False)

@@ -36,6 +36,7 @@ class ArxivMetadata(BaseModel):
     arxiv_id: str = Field(..., description="arXiv identifier")
     categories: List[str] = Field(default_factory=list, description="arXiv categories")
     pdf_url: str = Field(..., description="PDF download URL")
+    published_date: str = Field(..., description="Date published on arXiv")
 
 
 class ParsedPaper(BaseModel):
