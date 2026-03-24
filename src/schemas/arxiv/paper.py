@@ -16,8 +16,8 @@ class ArxivPaper(BaseModel):
     pdf_url: str = Field(..., description="URL to PDF")
 
 
-class PaperCreate(BaseModel):
-    """Schema for creating a paper with optional fields for parsed PDF content"""
+class PaperBase(BaseModel):
+    """Schema for core arXiv metadata"""
 
     arxiv_id: str = Field(..., description="arXiv paper ID")
     title: str = Field(..., description="Paper title")
@@ -27,6 +27,10 @@ class PaperCreate(BaseModel):
     published_date: datetime = Field(..., description="Date published on arXiv")
     pdf_url: str = Field(..., description="URL to PDF")
 
+
+class PaperCreate(PaperBase):
+    """Schema for creating a paper with optional fields for parsed PDF content"""
+
     # Parsed PDF content (optional - added when PDF is processed)
     raw_text: Optional[str] = Field(None, description="Full raw text extracted from PDF")
     sections: Optional[List[Dict[str, Any]]] = Field(None, description="List of sections with titles and content")
@@ -34,3 +38,14 @@ class PaperCreate(BaseModel):
     # PDF processing metadata (optional)
     parser_used: Optional[str] = Field(None, description="Which parser was used (DOCLING, etc.)")
     pdf_processed: Optional[bool] = Field(False, description="Whether PDF was successfully processed")
+
+
+class PaperResponse(PaperBase):
+    """Schema for paper API responses with all content."""
+
+    # Parsed PDF content (optional fields)
+    raw_text: Optional[str] = Field(None, description="Full raw text extracted from PDF")
+    sections: Optional[List[Dict[str, Any]]] = Field(None, description="List of sections with titles and content")
+
+    class Config:
+        from_attributes = True

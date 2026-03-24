@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from src.db.factory import make_database
+from src.routers.papers import router as papers_router
 
 # Setup logging
 logging.basicConfig(
@@ -43,3 +44,6 @@ app = FastAPI(
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+
+app.include_router(papers_router, prefix="/api/v1")
