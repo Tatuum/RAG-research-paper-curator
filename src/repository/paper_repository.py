@@ -23,6 +23,10 @@ class PaperRepository:
         stmt = select(Paper).where(Paper.arxiv_id == arxiv_id)
         return cast(Paper | None, self.session.scalar(stmt))
 
+    def get_all(self, limit: int = 100, offset: int = 0) -> list[Paper]:
+        stmt = select(Paper).order_by(Paper.published_date.desc()).limit(limit).offset(offset)
+        return cast(list[Paper], self.session.scalars(stmt).all())
+
     def update(self, paper: Paper) -> Paper:
         self.session.add(paper)
         self.session.flush()
