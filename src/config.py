@@ -76,6 +76,20 @@ class PostgresSettings(BaseConfigSettings):
     max_overflow: int = 0
 
 
+class OpenSearchSettings(BaseConfigSettings):
+    model_config = SettingsConfigDict(
+        env_file=[".env", str(ENV_FILE_PATH)],
+        env_prefix="OPENSEARCH__",
+        extra="ignore",
+        frozen=True,
+        case_sensitive=False,
+    )
+
+    host: str = "http://localhost:9201"
+    index_name: str = "arxiv-papers"
+    vector_dimension: int = 1024  # Jina embeddings dimension
+
+
 class Settings(BaseConfigSettings):
     app_version: str = "0.1.0"
     debug: bool = True
@@ -85,7 +99,7 @@ class Settings(BaseConfigSettings):
     arxiv: ArxivSettings = Field(default_factory=ArxivSettings)
     pdf_parser: PDFParserSettings = Field(default_factory=PDFParserSettings)
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)
-
+    opensearch: OpenSearchSettings = Field(default_factory=OpenSearchSettings)
     # Jina AI embeddings configuration
     jina_api_key: str = ""
 
