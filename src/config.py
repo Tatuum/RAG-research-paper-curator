@@ -86,6 +86,9 @@ class Settings(BaseConfigSettings):
     pdf_parser: PDFParserSettings = Field(default_factory=PDFParserSettings)
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)
 
+    # Jina AI embeddings configuration
+    jina_api_key: str = ""
+
 
 def get_settings() -> Settings:
     return Settings()
