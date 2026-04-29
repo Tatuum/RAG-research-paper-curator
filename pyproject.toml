@@ -12,6 +12,7 @@ dependencies = [
     "gradio>=5.47.0",
     "httpx>=0.28.1",
     "numpy<2.0",
+    "opensearch-py>=3.2.0",
     "psycopg2-binary>=2.9.11",
     "pydantic>=2.11.3",
     "pydantic-settings>=2.10.1",

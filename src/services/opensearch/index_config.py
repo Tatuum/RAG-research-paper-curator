@@ -25,7 +25,7 @@ PAPERS_CHUNKS_MAPPING = {
                 "method": {
                     "name": "hnsw",
                     "engine": "lucene",
-                    "space_type": "cosine",
+                    "space_type": "l2",
                 },
             },
         }
