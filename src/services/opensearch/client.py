@@ -4,7 +4,8 @@ from opensearchpy import OpenSearch, helpers
 
 from src.config import Settings
 from src.schemas.indexing.chunk import TextChunk
-from src.services.opensearch.index_config import PAPERS_CHUNKS_INDEX, PAPERS_CHUNKS_MAPPING
+from src.services.opensearch.index_config import HYBRID_RRF_PIPELINE, PAPERS_CHUNKS_INDEX, PAPERS_CHUNKS_MAPPING
+from src.services.opensearch.query_builder import QueryBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +30,40 @@ class OpenSearchClient:
             if not self._client.indices.exists(index=self._index):
                 self._client.indices.create(index=self._index, body=PAPERS_CHUNKS_MAPPING)
                 logger.info(f"Created index: {self._index}")
+                self._create_rrf_pipeline()
                 return True
             else:
                 logger.info(f"Index already exists: {self._index}")
+                self._create_rrf_pipeline()
                 return False
         except Exception as e:
             logger.error(f"failed to create index. {e}")
+            raise
+
+    def _create_rrf_pipeline(self) -> bool:
+        """Create RRF search pipeline for native hybrid search.
+        :returns: True if created, False if already exists
+        """
+        try:
+            pipeline_id = HYBRID_RRF_PIPELINE["id"]
+            try:
+                self._client.ingest.get_pipeline(id=pipeline_id)
+                logger.info(f"RRF pipeline already exists: {pipeline_id}")
+                return False
+            except Exception:
+                pass
+            pipeline_body = {
+                "description": HYBRID_RRF_PIPELINE["description"],
+                "phase_results_processors": HYBRID_RRF_PIPELINE["phase_results_processors"],
+            }
+
+            self._client.transport.perform_request("PUT", f"/_search/pipeline/{pipeline_id}", body=pipeline_body)
+
+            logger.info(f"Created RRF search pipeline: {pipeline_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error creating RRF pipeline: {e}")
             raise
 
     def bulk_index_chunks(
@@ -76,3 +105,36 @@ class OpenSearchClient:
         except Exception as e:
             logger.error(f"Failed to bulk index chunks: {e}")
             raise
+
+    def search_bm25(self, query: str, size: int = 10, categories: list[str] | None = None, latest: bool = False) -> dict:
+        # Step 1: build the query dict
+        search_body = QueryBuilder(query=query, size=size, categories=categories, latest=latest).build()
+        # Step 2: send to OpenSearch
+        response = self._client.search(index=self._index, body=search_body)
+        # Step 3: extract results into a clean dict
+        hits = []
+        for hit in response["hits"]["hits"]:
+            chunk = hit["_source"].copy()
+            chunk["score"] = hit["_score"]
+            hits.append(chunk)
+        return {"total": response["hits"]["total"]["value"], "hits": hits}
+
+    def search_hybrid(self, query: str, query_embedding: list[float], size: int = 10, categories: list[str] | None = None):
+        # Step 1: Build BM25 query
+        bm25_body = QueryBuilder(query=query, size=size, categories=categories).build()
+        bm25_query = bm25_body["query"]
+        # Step 2: Wrap both in hybrid
+        search_body = {
+            "size": size,
+            "query": {"hybrid": {"queries": [bm25_query, {"knn": {"embedding": {"vector": query_embedding, "k": size * 2}}}]}},
+            "_source": bm25_body["_source"],
+        }
+        # Step 3: Send with RRF pipeline
+        response = self._client.search(index=self._index, body=search_body, params={"search_pipeline": HYBRID_RRF_PIPELINE["id"]})
+        # Step 4: extract results into a clean dict
+        hits = []
+        for hit in response["hits"]["hits"]:
+            chunk = hit["_source"].copy()
+            chunk["score"] = hit["_score"]
+            hits.append(chunk)
+        return {"total": response["hits"]["total"]["value"], "hits": hits}
