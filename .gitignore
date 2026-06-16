@@ -190,6 +190,7 @@ test_data/
 #guides
 guides/
 learning/
+docs/
 
 # Notebooks
 notebooks/
