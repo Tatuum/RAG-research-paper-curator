@@ -16,6 +16,7 @@ dependencies = [
     "psycopg2-binary>=2.9.11",
     "pydantic>=2.11.3",
     "pydantic-settings>=2.10.1",
+    "redis>=8.0.0",
     "sqlalchemy>=2.0.44",
     "torch==2.2.2",
     "torchvision==0.17.2",

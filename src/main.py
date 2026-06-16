@@ -7,6 +7,7 @@ from src.config import get_settings
 from src.db.factory import make_database
 from src.routers.papers import router as papers_router
 from src.routers.search import router as search_router
+from src.services.cache.factory import make_redis_client
 from src.services.embeddings.factory import make_embeddings_client
 from src.services.opensearch.factory import make_opensearch_client
 
@@ -45,7 +46,14 @@ async def lifespan(app: FastAPI):
     embeddings_client = make_embeddings_client()
     app.state.embeddings = embeddings_client
 
-    logger.info("Services initialized: OpenSearch, Embeddings")
+    redis_client = make_redis_client()
+    app.state.redis = redis_client
+    if redis_client.health_check():
+        logger.info("Redis client connected successfully")
+    else:
+        logger.warning("Redis connection failed - caching features will be limited")
+
+    logger.info("Services initialized: OpenSearch, Embeddings, Redis")
     logger.info("API ready")
 
     yield

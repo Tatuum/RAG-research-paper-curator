@@ -90,6 +90,22 @@ class OpenSearchSettings(BaseConfigSettings):
     vector_dimension: int = 1024  # Jina embeddings dimension
 
 
+class RedisSettings(BaseConfigSettings):
+    model_config = SettingsConfigDict(
+        env_file=[".env", str(ENV_FILE_PATH)],
+        env_prefix="REDIS__",
+        extra="ignore",
+        frozen=True,
+        case_sensitive=False,
+    )
+
+    host: str = "localhost"
+    port: int = 6379
+    password: str | None = None
+    decode_responses: bool = True
+    ttl_hours: int = 1  # Cache TTL in hours
+
+
 class Settings(BaseConfigSettings):
     app_version: str = "0.1.0"
     debug: bool = True
@@ -100,6 +116,7 @@ class Settings(BaseConfigSettings):
     pdf_parser: PDFParserSettings = Field(default_factory=PDFParserSettings)
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)
     opensearch: OpenSearchSettings = Field(default_factory=OpenSearchSettings)
+    redis: RedisSettings = Field(default_factory=RedisSettings)
     # Jina AI embeddings configuration
     jina_api_key: str = ""
 
