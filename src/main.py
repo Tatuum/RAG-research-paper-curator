@@ -5,10 +5,12 @@ from fastapi import FastAPI
 
 from src.config import get_settings
 from src.db.factory import make_database
+from src.routers.ask import router as ask_router
 from src.routers.papers import router as papers_router
 from src.routers.search import router as search_router
 from src.services.cache.factory import make_redis_client
 from src.services.embeddings.factory import make_embeddings_client
+from src.services.llm.factory import make_llm_client
 from src.services.opensearch.factory import make_opensearch_client
 
 # Setup logging
@@ -53,7 +55,14 @@ async def lifespan(app: FastAPI):
     else:
         logger.warning("Redis connection failed - caching features will be limited")
 
-    logger.info("Services initialized: OpenSearch, Embeddings, Redis")
+    ollama_client = make_llm_client()
+    app.state.llm = ollama_client
+    if ollama_client.health_check():
+        logger.info("Ollama client connected successfully")
+    else:
+        logger.warning("Ollama connection failed")
+
+    logger.info("Services initialized: OpenSearch, Embeddings, Redis, Ollama")
     logger.info("API ready")
 
     yield
@@ -79,3 +88,4 @@ async def health_check():
 
 app.include_router(papers_router, prefix="/api/v1")
 app.include_router(search_router, prefix="/api/v1")
+app.include_router(ask_router, prefix="/api/v1")
