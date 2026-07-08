@@ -106,6 +106,18 @@ class RedisSettings(BaseConfigSettings):
     ttl_hours: int = 1  # Cache TTL in hours
 
 
+class OllamaSettings(BaseConfigSettings):
+    model_config = SettingsConfigDict(
+        env_file=[".env", str(ENV_FILE_PATH)],
+        env_prefix="OLLAMA__",
+        extra="ignore",
+        frozen=True,
+        case_sensitive=False,
+    )
+    host: str = "http://ollama:11434"
+    model: str = "llama3.2:1b"
+
+
 class Settings(BaseConfigSettings):
     app_version: str = "0.1.0"
     debug: bool = True
@@ -117,6 +129,7 @@ class Settings(BaseConfigSettings):
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)
     opensearch: OpenSearchSettings = Field(default_factory=OpenSearchSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
+    ollama: OllamaSettings = Field(default_factory=OllamaSettings)
     # Jina AI embeddings configuration
     jina_api_key: str = ""
 
