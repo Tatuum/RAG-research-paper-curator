@@ -6,12 +6,16 @@ from fastapi import FastAPI
 from src.config import get_settings
 from src.db.factory import make_database
 from src.routers.ask import router as ask_router
+from src.routers.ingest import router as ingest_router
 from src.routers.papers import router as papers_router
 from src.routers.search import router as search_router
+from src.services.arxiv.factory import make_arxiv_client
 from src.services.cache.factory import make_redis_client
 from src.services.embeddings.factory import make_embeddings_client
 from src.services.llm.factory import make_llm_client
+from src.services.metadata_fetcher import make_metadata_fetcher
 from src.services.opensearch.factory import make_opensearch_client
+from src.services.pdf_parser.factory import make_pdf_parser_service
 
 # Setup logging
 logging.basicConfig(
@@ -35,6 +39,12 @@ async def lifespan(app: FastAPI):
     app.state.database = database
     logger.info("Database connected")
 
+    # Initialize arxiv_client, pdf_parser and metadata_fetcher services
+    arxiv_client = make_arxiv_client()
+    pdf_parser = make_pdf_parser_service()
+    metadata_fetcher = make_metadata_fetcher(arxiv_client=arxiv_client, pdf_parser=pdf_parser)
+    app.state.metadata_fetcher = metadata_fetcher
+
     # Initialize search service
     opensearch_client = make_opensearch_client()
     app.state.opensearch = opensearch_client
@@ -45,9 +55,11 @@ async def lifespan(app: FastAPI):
     else:
         logger.warning("OpenSearch connection failed - search features will be limited")
 
+    # Initialize embeddiing service
     embeddings_client = make_embeddings_client()
     app.state.embeddings = embeddings_client
 
+    # Initialize caching service
     redis_client = make_redis_client()
     app.state.redis = redis_client
     if redis_client.health_check():
@@ -55,6 +67,7 @@ async def lifespan(app: FastAPI):
     else:
         logger.warning("Redis connection failed - caching features will be limited")
 
+    # Initialiize Ollama service
     ollama_client = make_llm_client()
     app.state.llm = ollama_client
     if ollama_client.health_check():
@@ -89,3 +102,4 @@ async def health_check():
 app.include_router(papers_router, prefix="/api/v1")
 app.include_router(search_router, prefix="/api/v1")
 app.include_router(ask_router, prefix="/api/v1")
+app.include_router(ingest_router, prefix="/api/v1")

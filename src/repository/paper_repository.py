@@ -19,6 +19,10 @@ class PaperRepository:
         self.session.flush()
         return db_paper
 
+    def get_recently_created(self, limit: int) -> list[Paper]:
+        stmt = select(Paper).order_by(Paper.created_at.desc()).limit(limit)
+        return cast(list[Paper], self.session.scalars(stmt).all())
+
     def get_by_arxiv_id(self, arxiv_id: str) -> Paper | None:
         stmt = select(Paper).where(Paper.arxiv_id == arxiv_id)
         return cast(Paper | None, self.session.scalar(stmt))
