@@ -41,7 +41,11 @@ async def ingest_papers(
             if not paper.raw_text and not paper.sections:
                 continue
             chunks = chunker.chunk_paper(
-                arxiv_id=paper.arxiv_id, title=paper.title, abstract=paper.abstract, sections=paper.sections or [], raw_text=paper.raw_text or ""
+                arxiv_id=str(paper.arxiv_id),
+                title=str(paper.title),
+                abstract=str(paper.abstract),
+                sections=paper.sections or [],
+                raw_text=paper.raw_text or "",
             )
             if not chunks:
                 continue
@@ -49,9 +53,9 @@ async def ingest_papers(
             chunks_indexed += opensearch_client.bulk_index_chunks(
                 chunks=chunks,
                 embeddings=embeddings,
-                title=paper.title,
-                authors=paper.authors,
-                categories=paper.categories,
+                title=str(paper.title),
+                authors=list(paper.authors),
+                categories=list(paper.categories),
                 published_date=paper.published_date.strftime("%Y-%m-%d"),
             )
 
