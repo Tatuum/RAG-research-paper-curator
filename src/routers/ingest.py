@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 from fastapi import APIRouter, HTTPException
 
@@ -44,8 +45,8 @@ async def ingest_papers(
                 arxiv_id=str(paper.arxiv_id),
                 title=str(paper.title),
                 abstract=str(paper.abstract),
-                sections=paper.sections or [],
-                raw_text=paper.raw_text or "",
+                sections=cast(list[dict], paper.sections or []),
+                raw_text=str(paper.raw_text or ""),
             )
             if not chunks:
                 continue
