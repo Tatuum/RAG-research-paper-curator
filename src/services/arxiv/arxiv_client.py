@@ -73,7 +73,9 @@ class ArxivClient:
         start: int = 0,
         sort_by: str = "submittedDate",
         sort_order: str = "descending",
-        max_results: Optional[int] = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        max_results: int | None = None,
     ) -> List[ArxivPaper]:
         """
         Fetch papers from arXiv API.
@@ -91,6 +93,14 @@ class ArxivClient:
 
         # Build search query
         search_query = f"cat:{self.search_category}"
+
+        # Add date filtering if provided
+        if from_date or to_date:
+            # Convert dates to arXiv format (YYYYMMDDHHMM) - use 0000 for start of day, 2359 for end
+            date_from = f"{from_date}0000" if from_date else "*"
+            date_to = f"{to_date}2359" if to_date else "*"
+            # Use correct arXiv API syntax with + symbols
+            search_query += f" AND submittedDate:[{date_from}+TO+{date_to}]"
 
         params = {
             "search_query": search_query,

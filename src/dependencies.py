@@ -7,6 +7,7 @@ from src.db.interfaces.base import BaseDatabase
 from src.services.cache.redis_client import RedisClient
 from src.services.embeddings.jina_client import JinaEmbeddingsClient
 from src.services.llm.ollama_client import OllamaClient
+from src.services.metadata_fetcher import MetadataFetcher
 from src.services.opensearch.client import OpenSearchClient
 
 
@@ -41,8 +42,14 @@ def get_ollama_client(request: Request) -> OllamaClient:
     return cast(OllamaClient, request.app.state.llm)
 
 
+def get_metadata_fetcher(request: Request) -> MetadataFetcher:
+    """Get MetadataFetcher from the request state"""
+    return cast(MetadataFetcher, request.app.state.metadata_fetcher)
+
+
 SessionDep = Annotated[Session, Depends(get_db_session)]
 OpenSearchDep = Annotated[OpenSearchClient, Depends(get_opensearch_client)]
 EmbeddingsDep = Annotated[JinaEmbeddingsClient, Depends(get_embeddings_client)]
 RedisDep = Annotated[RedisClient, Depends(get_redis_client)]
 OllamaDep = Annotated[OllamaClient, Depends(get_ollama_client)]
+MetadataFetcherDep = Annotated[MetadataFetcher, Depends(get_metadata_fetcher)]

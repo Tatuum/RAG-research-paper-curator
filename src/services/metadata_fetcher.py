@@ -82,6 +82,8 @@ class MetadataFetcher:
         max_results: int = 10,
         process_pdfs: bool = True,
         db_session: Optional[Session] = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
     ) -> PipelineResults:
         """Fetch papers from arXiv, process PDFs.
 
@@ -101,9 +103,7 @@ class MetadataFetcher:
         }
         try:
             # Step 1: Fetch paper metadata from arXiv
-            papers = await self.arxiv_client.fetch_papers(
-                max_results=max_results,
-            )
+            papers = await self.arxiv_client.fetch_papers(max_results=max_results, from_date=from_date, to_date=to_date)
             results["papers_fetched"] = len(papers)
 
             if not papers:
