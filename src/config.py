@@ -118,6 +118,23 @@ class OllamaSettings(BaseConfigSettings):
     model: str = "llama3.2:1b"
 
 
+class LangfuseSettings(BaseConfigSettings):
+    model_config = SettingsConfigDict(
+        env_file=[".env", str(ENV_FILE_PATH)],
+        env_prefix="LANGFUSE__",
+        extra="ignore",
+        frozen=True,
+        case_sensitive=False,
+    )
+    enabled: bool = True
+    public_key: str = ""
+    secret_key: str = ""
+    host: str = "https://cloud.langfuse.com"
+    flush_at: int = 15
+    flush_interval: float = 1.0
+    debug: bool = False
+
+
 class Settings(BaseConfigSettings):
     app_version: str = "0.1.0"
     debug: bool = True
@@ -130,6 +147,7 @@ class Settings(BaseConfigSettings):
     opensearch: OpenSearchSettings = Field(default_factory=OpenSearchSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
     ollama: OllamaSettings = Field(default_factory=OllamaSettings)
+    langfuse: LangfuseSettings = Field(default_factory=LangfuseSettings)
     # Jina AI embeddings configuration
     jina_api_key: str = ""
 
