@@ -12,6 +12,7 @@ from src.routers.search import router as search_router
 from src.services.arxiv.factory import make_arxiv_client
 from src.services.cache.factory import make_redis_client
 from src.services.embeddings.factory import make_embeddings_client
+from src.services.langfuse.factory import make_langfuse_tracer
 from src.services.llm.factory import make_llm_client
 from src.services.metadata_fetcher import make_metadata_fetcher
 from src.services.opensearch.factory import make_opensearch_client
@@ -75,13 +76,22 @@ async def lifespan(app: FastAPI):
     else:
         logger.warning("Ollama connection failed")
 
-    logger.info("Services initialized: OpenSearch, Embeddings, Redis, Ollama")
+    # Initialize Langfuse service
+    langfuse_tracer = make_langfuse_tracer()
+    app.state.langfuse_tracer = langfuse_tracer
+    if langfuse_tracer.health_check():
+        logger.info("Langfuse client connected successfully")
+    else:
+        logger.warning("Langfuse connection failed - tracing features will be limited")
+
+    logger.info("Services initialized: OpenSearch, Embeddings, Redis, Ollama, Langfuse, MetadataFetcher")
     logger.info("API ready")
 
     yield
 
     # Cleanup
     database.teardown()
+    langfuse_tracer.shutdown()
     await embeddings_client.close()
     logger.info("API shutdown complete")
 

@@ -11,6 +11,7 @@ dependencies = [
     "fastapi>=0.117.1",
     "gradio>=5.47.0",
     "httpx>=0.28.1",
+    "langfuse>=4.14.0",
     "numpy<2.0",
     "ollama>=0.6.2",
     "opensearch-py>=3.2.0",

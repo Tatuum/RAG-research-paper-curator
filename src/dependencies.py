@@ -6,9 +6,15 @@ from sqlalchemy.orm import Session
 from src.db.interfaces.base import BaseDatabase
 from src.services.cache.redis_client import RedisClient
 from src.services.embeddings.jina_client import JinaEmbeddingsClient
+from src.services.langfuse.client import LangfuseTracer
 from src.services.llm.ollama_client import OllamaClient
 from src.services.metadata_fetcher import MetadataFetcher
 from src.services.opensearch.client import OpenSearchClient
+
+
+def get_langfuse_tracer(request: Request) -> LangfuseTracer:
+    """Get LangfuseTracer from the request state"""
+    return cast(LangfuseTracer, request.app.state.langfuse_tracer)
 
 
 def get_database(request: Request) -> BaseDatabase:
@@ -53,3 +59,4 @@ EmbeddingsDep = Annotated[JinaEmbeddingsClient, Depends(get_embeddings_client)]
 RedisDep = Annotated[RedisClient, Depends(get_redis_client)]
 OllamaDep = Annotated[OllamaClient, Depends(get_ollama_client)]
 MetadataFetcherDep = Annotated[MetadataFetcher, Depends(get_metadata_fetcher)]
+LangfuseDep = Annotated[LangfuseTracer, Depends(get_langfuse_tracer)]
